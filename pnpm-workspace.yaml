@@ -1,6 +1,10 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+
+# Metro cannot follow pnpm's symlinked store reliably, so the mobile app needs a
+# hoisted node_modules. pnpm 10+ reads this here, not from .npmrc.
+nodeLinker: hoisted
 allowBuilds:
   '@sentry/cli': true
   esbuild: true
