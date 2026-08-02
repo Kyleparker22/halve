@@ -141,6 +141,7 @@ export default function GamesScreen() {
             value={stake}
             onChangeText={setStake}
             keyboardType="decimal-pad"
+            selectTextOnFocus
             style={{
               borderWidth: 1,
               borderColor: theme.border,
@@ -163,6 +164,7 @@ export default function GamesScreen() {
                 value={allowance}
                 onChangeText={setAllowance}
                 keyboardType="number-pad"
+                selectTextOnFocus
                 style={{
                   borderWidth: 1,
                   borderColor: theme.border,

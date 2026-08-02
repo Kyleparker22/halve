@@ -45,7 +45,10 @@ export default function ScoreScreen() {
     card.totals.find((t) => t.roundPlayerId === roundPlayerId);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['left', 'right', 'bottom']}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: theme.bg }}
+      edges={['left', 'right', 'bottom']}
+    >
       <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
         <Row justify="space-between">
           <View>
@@ -84,12 +87,16 @@ export default function ScoreScreen() {
                   <Row gap={6}>
                     <Body>{player.name}</Body>
                     {player.isGuest ? <Small>guest</Small> : null}
-                    {entry.pending ? <Small>·  syncing</Small> : null}
+                    {entry.pending ? <Small>· syncing</Small> : null}
                   </Row>
                   <Small>
                     {totals && totals.holesPlayed > 0
                       ? `${totals.gross} gross · ${totals.net} net · ${
-                          totals.toPar === 0 ? 'E' : totals.toPar > 0 ? `+${totals.toPar}` : totals.toPar
+                          totals.toPar === 0
+                            ? 'E'
+                            : totals.toPar > 0
+                              ? `+${totals.toPar}`
+                              : totals.toPar
                         } thru ${totals.holesPlayed}`
                       : 'no scores yet'}
                   </Small>
@@ -102,11 +109,42 @@ export default function ScoreScreen() {
                       card.enter(player.id, hole.number, { strokes: Math.max(1, value - 1) })
                     }
                   />
-                  <View style={{ minWidth: 48, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 30, fontWeight: '700', color: theme.text }}>
-                      {entry.strokes ?? '–'}
+                  {/* Par is the most common score on the card and used to cost
+                      two taps (+1 then −1). Tapping the readout records it. */}
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      entry.strokes === null
+                        ? `Record par, ${hole.par}, for ${player.name}`
+                        : `${player.name} scored ${entry.strokes}`
+                    }
+                    onPress={() =>
+                      entry.strokes === null
+                        ? card.enter(player.id, hole.number, { strokes: hole.par })
+                        : undefined
+                    }
+                    style={{
+                      minWidth: 56,
+                      minHeight: HIT_SIZE,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 30,
+                        fontWeight: '700',
+                        color: entry.strokes === null ? theme.muted : theme.text,
+                      }}
+                    >
+                      {entry.strokes ?? hole.par}
                     </Text>
-                  </View>
+                    {entry.strokes === null ? (
+                      <Text style={{ fontSize: 10, color: theme.muted, marginTop: -2 }}>
+                        tap for par
+                      </Text>
+                    ) : null}
+                  </Pressable>
                   <Stepper
                     label="+"
                     onPress={() =>
@@ -232,7 +270,10 @@ export default function ScoreScreen() {
           {holeIndex >= holes.length - 1 ? (
             <Button title="Finish" onPress={() => router.push(`/round/${id}/recap`)} />
           ) : (
-            <Button title="Next ▶" onPress={() => setHoleIndex((i) => Math.min(holes.length - 1, i + 1))} />
+            <Button
+              title="Next ▶"
+              onPress={() => setHoleIndex((i) => Math.min(holes.length - 1, i + 1))}
+            />
           )}
         </View>
       </Row>

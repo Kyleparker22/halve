@@ -12,12 +12,7 @@ import {
   Small,
   Title,
 } from '../../src/components/ui';
-import {
-  useDeleteAccount,
-  useProfile,
-  useSession,
-  useSignOut,
-} from '../../src/hooks/useSession';
+import { useDeleteAccount, useProfile, useSession, useSignOut } from '../../src/hooks/useSession';
 import { useCrewBalancesForMe } from '../../src/hooks/useBalances';
 
 export default function ProfileScreen() {
@@ -58,7 +53,11 @@ export default function ProfileScreen() {
         variant="secondary"
         onPress={() => router.push('/(auth)/onboarding')}
       />
-      <Button title="Notification settings" variant="secondary" onPress={() => router.push('/settings/notifications')} />
+      <Button
+        title="Notification settings"
+        variant="secondary"
+        onPress={() => router.push('/settings/notifications')}
+      />
       <Button title="Sign out" variant="secondary" onPress={() => signOut.mutate()} />
 
       <Card>

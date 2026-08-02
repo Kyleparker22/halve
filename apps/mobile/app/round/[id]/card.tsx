@@ -38,7 +38,10 @@ export default function FullCardScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['left', 'right', 'bottom']}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: theme.bg }}
+      edges={['left', 'right', 'bottom']}
+    >
       <ScrollView horizontal>
         <ScrollView>
           <View style={{ padding: spacing.md }}>

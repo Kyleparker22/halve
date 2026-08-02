@@ -87,7 +87,10 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, buster: CACHE_BUSTER }}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister, buster: CACHE_BUSTER }}
+        >
           <RootNavigator />
         </PersistQueryClientProvider>
       </SafeAreaProvider>

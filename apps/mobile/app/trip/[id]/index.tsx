@@ -94,7 +94,11 @@ export default function TripScreen() {
       <Card>
         <Row justify="space-between">
           <Heading>Itinerary</Heading>
-          <Button title="Add a round" variant="secondary" onPress={() => router.push('/round/new')} />
+          <Button
+            title="Add a round"
+            variant="secondary"
+            onPress={() => router.push('/round/new')}
+          />
         </Row>
         {rounds.length === 0 ? <Small>No rounds scheduled yet.</Small> : null}
         {rounds.map((round, index) => (
@@ -121,7 +125,11 @@ export default function TripScreen() {
       ) : null}
 
       <Button title="Expenses" onPress={() => router.push(`/trip/${id}/expenses`)} />
-      <Button title="Trip chat" variant="secondary" onPress={() => router.push(`/chat/trip/${id}`)} />
+      <Button
+        title="Trip chat"
+        variant="secondary"
+        onPress={() => router.push(`/chat/trip/${id}`)}
+      />
       <Button
         title="Invite by link"
         variant="secondary"

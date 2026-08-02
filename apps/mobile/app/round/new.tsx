@@ -2,16 +2,7 @@ import { useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { courseHandicap, playingHandicap } from '@halve/games';
-import {
-  Body,
-  Button,
-  Card,
-  Heading,
-  Row,
-  Screen,
-  Small,
-  Title,
-} from '../../src/components/ui';
+import { Body, Button, Card, Heading, Row, Screen, Small, Title } from '../../src/components/ui';
 import { useCourseSearch, useCreateRound } from '../../src/hooks/useRounds';
 import { useCrewGuests, useCrewMembers, useCrews } from '../../src/hooks/useCrews';
 import { useSession } from '../../src/hooks/useSession';

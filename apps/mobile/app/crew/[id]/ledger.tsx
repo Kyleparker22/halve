@@ -127,6 +127,7 @@ export default function LedgerScreen() {
           value={amount}
           onChangeText={setAmount}
           keyboardType="decimal-pad"
+          selectTextOnFocus
           placeholder="18.00"
           placeholderTextColor={theme.muted}
         />

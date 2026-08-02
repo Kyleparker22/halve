@@ -100,7 +100,11 @@ export default function RoundScreen() {
           {(requests.data ?? []).map((request) => (
             <Row key={request.id} justify="space-between">
               <Body>{request.profiles.display_name}</Body>
-              <Button title="Approve" variant="secondary" onPress={() => approve.mutate(request.id)} />
+              <Button
+                title="Approve"
+                variant="secondary"
+                onPress={() => approve.mutate(request.id)}
+              />
             </Row>
           ))}
         </Card>
@@ -109,7 +113,11 @@ export default function RoundScreen() {
       <Card>
         <Row justify="space-between">
           <Heading>Games</Heading>
-          <Button title="Add" variant="secondary" onPress={() => router.push(`/round/${id}/games`)} />
+          <Button
+            title="Add"
+            variant="secondary"
+            onPress={() => router.push(`/round/${id}/games`)}
+          />
         </Row>
         {games.length === 0 ? (
           <Small>No games yet. Nassau and skins take about ten seconds to set up.</Small>
@@ -118,9 +126,7 @@ export default function RoundScreen() {
             <Row key={game.id} justify="space-between">
               <Body>{game.name ?? game.type}</Body>
               <Small>
-                {'stakeCents' in game.config
-                  ? `$${(game.config.stakeCents / 100).toFixed(0)}`
-                  : ''}{' '}
+                {'stakeCents' in game.config ? `$${(game.config.stakeCents / 100).toFixed(0)}` : ''}{' '}
                 · {game.config.handicap.mode}
               </Small>
             </Row>

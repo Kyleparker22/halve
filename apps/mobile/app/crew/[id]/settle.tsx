@@ -131,9 +131,7 @@ export default function SettleScreen() {
                       title="Copy the amount"
                       variant="secondary"
                       onPress={() =>
-                        void Clipboard.setStringAsync(
-                          (settlement.amount_cents / 100).toFixed(2),
-                        )
+                        void Clipboard.setStringAsync((settlement.amount_cents / 100).toFixed(2))
                       }
                     />
                   </>
@@ -141,9 +139,7 @@ export default function SettleScreen() {
                 <Button
                   title="Mark as paid"
                   variant="secondary"
-                  onPress={() =>
-                    confirm.mutate({ settlementId: settlement.id, method: 'venmo' })
-                  }
+                  onPress={() => confirm.mutate({ settlementId: settlement.id, method: 'venmo' })}
                 />
               </Card>
             );

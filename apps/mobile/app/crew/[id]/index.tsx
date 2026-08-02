@@ -105,7 +105,11 @@ export default function CrewScreen() {
           })
         }
       />
-      <Button title="Crew chat" variant="secondary" onPress={() => router.push(`/chat/crew/${id}`)} />
+      <Button
+        title="Crew chat"
+        variant="secondary"
+        onPress={() => router.push(`/chat/crew/${id}`)}
+      />
 
       {(feed.data ?? []).length > 0 ? (
         <Card>

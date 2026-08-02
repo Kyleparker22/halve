@@ -28,7 +28,10 @@ export default function Onboarding() {
     setHandle((current) => current || profile.handle);
   }, [profile]);
 
-  const normalized = handle.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+  const normalized = handle
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '');
   const { data: available, isFetching } = useHandleAvailable(normalized);
   const unchanged = normalized === profile?.handle;
   const valid = /^[a-z0-9_]{3,20}$/.test(normalized) && (unchanged || available === true);
@@ -89,6 +92,7 @@ export default function Onboarding() {
           value={index}
           onChangeText={setIndex}
           keyboardType="numbers-and-punctuation"
+          selectTextOnFocus
           placeholder="8.4"
           placeholderTextColor={theme.muted}
         />

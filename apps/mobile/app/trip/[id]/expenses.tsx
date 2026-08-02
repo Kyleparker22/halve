@@ -36,7 +36,8 @@ export default function ExpensesScreen() {
 
   const members = trip.data.members;
   const nameFor = (memberId: string) => members.find((m) => m.id === memberId)?.name ?? 'Member';
-  const shareWith = shared.length > 0 ? shared : members.filter((m) => m.status === 'in').map((m) => m.id);
+  const shareWith =
+    shared.length > 0 ? shared : members.filter((m) => m.status === 'in').map((m) => m.id);
   const cents = Math.round(Number(amount || '0') * 100);
   const preview = cents > 0 ? splitEvenly(cents, shareWith) : [];
 
@@ -105,6 +106,7 @@ export default function ExpensesScreen() {
           value={amount}
           onChangeText={setAmount}
           keyboardType="decimal-pad"
+          selectTextOnFocus
           placeholder="840.00"
           placeholderTextColor={theme.muted}
         />
@@ -140,7 +142,10 @@ export default function ExpensesScreen() {
         {preview.length > 0 ? (
           <Small>
             {preview
-              .map((share) => `${nameFor(share.tripMemberId)} $${(share.amountCents / 100).toFixed(2)}`)
+              .map(
+                (share) =>
+                  `${nameFor(share.tripMemberId)} $${(share.amountCents / 100).toFixed(2)}`,
+              )
               .join(' · ')}
           </Small>
         ) : null}

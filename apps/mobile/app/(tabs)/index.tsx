@@ -68,7 +68,8 @@ export default function CrewsScreen() {
               </Body>
               {/* The vouching edge is the whole point — never show a bare stranger. */}
               <Small>
-                {seat.host_crew_name} · vouched by {seat.vouch_display_name} · {seat.open_seats} open
+                {seat.host_crew_name} · vouched by {seat.vouch_display_name} · {seat.open_seats}{' '}
+                open
               </Small>
             </Card>
           ))}
