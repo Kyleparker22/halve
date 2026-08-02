@@ -1,53 +1,93 @@
 # E2E flow 1 (Technical Spec §10): invite → crew → round → score 18 → settle.
-# Run with: pnpm --filter @halve/mobile e2e
+#
+#   pnpm --filter @halve/mobile e2e
+#
+# Preconditions, both of which matter:
+#   1. `supabase db reset` first. The flow completes and settles a seeded round,
+#      which is not idempotent — a second run finds it already settled.
+#   2. A debug build installed. The dev sign-in this flow uses is behind __DEV__
+#      and does not exist in a release binary.
+#
+# It joins the seeded crew by invite code rather than creating an empty one:
+# a crew of one has nobody to win money from, so there would be nothing to
+# settle. Joining by code is also the real invite path.
 appId: golf.halve.app
 ---
 - launchApp:
     clearState: true
 
-# Sign in with the seeded development account.
-- tapOn: 'Continue with Apple'
+# Apple and Google are credential-gated, so the dev email path is the only one
+# that works against a local or staging project.
+- assertVisible: 'Development sign-in'
+- tapOn:
+    id: 'dev-email'
+- inputText: 'maestro@example.com'
+- tapOn:
+    id: 'dev-password'
+- inputText: 'maestro-e2e-password'
+- tapOn: 'Sign in (dev)'
+
+# First run creates the account, which lands on onboarding.
+- runFlow:
+    when:
+      visible: 'Set up your profile'
+    commands:
+      - tapOn: 'Start playing'
+
 - assertVisible: 'Crews'
 
-# Create a crew and pull up its invite link.
+# Invite path: join the seeded crew by its code.
 - tapOn: 'New crew'
 - tapOn:
-    id: 'crew-name'
-- inputText: 'Maestro Crew'
-- tapOn: 'Create crew'
-- assertVisible: 'Maestro Crew'
-- tapOn: 'Invite to the crew'
-- back
+    id: 'join-code'
+- inputText: 'sat4some01'
+- tapOn: 'Join'
+- assertVisible: 'Saturday Regulars'
+- assertVisible: 'Your balance'
 
-# Schedule a round.
-- tapOn: 'Schedule a round'
-- tapOn: 'Maestro Crew'
+# The seeded upcoming round already has Kyle and Todd in it.
+- tapOn: 'Rounds'
 - tapOn:
-    id: 'course-search'
-- inputText: 'Copperhead'
-- tapOn: 'Copperhead'
-- tapOn: 'Schedule it'
-- assertVisible: 'Copperhead'
+    text: 'Copperhead'
+    index: 0
+- assertVisible: 'Roster'
 
-# Add a Nassau, then score all 18.
+# A Nassau over the two players who are in.
 - tapOn: 'Add'
 - tapOn: 'Nassau'
 - tapOn: 'Add game'
+- assertVisible:
+    text: 'Nassau'
 - tapOn: 'Start the round'
 
+# One tap per player records par; two players, so index 0 and 1.
 - repeat:
     times: 18
     commands:
-      - tapOn: 'increase'
+      - tapOn:
+          id: 'score-par'
+          index: 0
+      - tapOn:
+          id: 'score-par'
+          index: 1
       - tapOn: 'Next ▶'
 
+# All 18 scored at par means the Nassau is halved and no money moves, so the
+# last hole gets a birdie to force a result worth settling.
+- tapOn: 'Prev ◀'
+- tapOn:
+    text: '−'
+    index: 0
 - tapOn: 'Finish'
+
 - assertVisible: 'Leaderboard'
 - tapOn: 'Finish and settle'
 - assertVisible: 'This round is settled'
 
-# Settle the ledger.
 - tapOn: 'Open the crew ledger'
 - assertVisible: 'Where everyone stands'
-- tapOn: 'Settle in'
+- tapOn:
+    text: 'Settle in'
 - assertVisible: 'The smallest set of payments'
+- tapOn: 'Request these payments'
+- assertVisible: 'Waiting on'

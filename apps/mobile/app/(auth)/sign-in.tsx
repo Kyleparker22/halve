@@ -106,6 +106,7 @@ export default function SignIn() {
           </Small>
           <TextInput
             style={input}
+            testID="dev-email"
             value={devEmail}
             onChangeText={setDevEmail}
             placeholder="you@example.com"
@@ -116,6 +117,7 @@ export default function SignIn() {
           />
           <TextInput
             style={input}
+            testID="dev-password"
             value={devPassword}
             onChangeText={setDevPassword}
             placeholder="password"

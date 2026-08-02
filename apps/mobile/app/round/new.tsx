@@ -64,6 +64,7 @@ export default function NewRoundScreen() {
         <Heading>Course</Heading>
         <TextInput
           style={input}
+          testID="course-search"
           value={term}
           onChangeText={setTerm}
           placeholder="Search — Innisbrook, Bethpage…"

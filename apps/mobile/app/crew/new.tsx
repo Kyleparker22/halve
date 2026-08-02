@@ -33,6 +33,7 @@ export default function NewCrewScreen() {
         <Heading>Start one</Heading>
         <TextInput
           style={input}
+          testID="crew-name"
           value={name}
           onChangeText={setName}
           placeholder="Saturday Regulars"
@@ -56,6 +57,7 @@ export default function NewCrewScreen() {
         <Heading>Or join with a code</Heading>
         <TextInput
           style={input}
+          testID="join-code"
           value={code}
           onChangeText={setCode}
           autoCapitalize="none"

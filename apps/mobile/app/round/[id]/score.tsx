@@ -112,6 +112,7 @@ export default function ScoreScreen() {
                   {/* Par is the most common score on the card and used to cost
                       two taps (+1 then −1). Tapping the readout records it. */}
                   <Pressable
+                    testID="score-par"
                     accessibilityRole="button"
                     accessibilityLabel={
                       entry.strokes === null
