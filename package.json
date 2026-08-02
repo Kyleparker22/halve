@@ -17,7 +17,7 @@
     "typecheck": "pnpm -r --parallel typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "gen:types": "supabase gen types typescript --local > packages/types/src/database.ts",
+    "gen:types": "supabase gen types typescript --linked > packages/types/src/database.ts.new && mv packages/types/src/database.ts.new packages/types/src/database.ts",
     "db:reset": "supabase db reset",
     "build:functions": "node scripts/build-functions.mjs"
   },

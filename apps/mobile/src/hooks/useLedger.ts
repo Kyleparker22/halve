@@ -127,7 +127,7 @@ export function useOpenSettlementBatch(crewId: string) {
     mutationFn: async ({ payments, tripId }: { payments: Payment[]; tripId?: string | null }) => {
       const { data, error } = await supabase.rpc('open_settlement_batch', {
         p_crew_id: crewId,
-        p_trip_id: tripId ?? null,
+        p_trip_id: tripId ?? undefined,
         p_payments: payments.map((p) => ({
           from: p.fromProfile,
           to: p.toProfile,

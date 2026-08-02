@@ -118,7 +118,7 @@ export function useSignOut() {
 export function useDeleteAccount() {
   return useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc('delete_account', { p_profile_id: null });
+      const { error } = await supabase.rpc('delete_account', {});
       if (error) throw error;
       await supabase.auth.signOut();
     },

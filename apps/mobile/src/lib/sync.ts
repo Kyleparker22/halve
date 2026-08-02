@@ -4,7 +4,12 @@
  * box, not at settlement.
  */
 import NetInfo from '@react-native-community/netinfo';
-import type { OutboxItem, ScoreRow } from '@halve/types';
+import type {
+  OutboxItem,
+  ScoreRow,
+  UpsertScoreArgs,
+  UpsertScoreRpcArgs,
+} from '@halve/types';
 import { supabase } from './supabase';
 import {
   dequeue,
@@ -51,7 +56,7 @@ const backoffMs = (attempts: number) => Math.min(30_000, 500 * 2 ** Math.min(att
 async function flushItem(item: OutboxItem): Promise<'done' | 'retry'> {
   const roundId = roundForItem.get(item.id);
 
-  const { data, error } = await supabase.rpc('upsert_score', {
+  const args: UpsertScoreArgs = {
     p_round_player_id: item.payload.roundPlayerId,
     p_hole_number: item.payload.hole,
     p_strokes: item.payload.strokes,
@@ -60,7 +65,14 @@ async function flushItem(item: OutboxItem): Promise<'done' | 'retry'> {
     p_client_id: item.payload.clientId,
     p_client_updated_at: item.payload.clientUpdatedAt,
     p_base_version: item.payload.baseVersion,
-  });
+  };
+
+  // The nulls are real and the database accepts them; only the generated
+  // signature disagrees. See UpsertScoreArgs.
+  const { data, error } = await supabase.rpc(
+    'upsert_score',
+    args as unknown as UpsertScoreRpcArgs,
+  );
 
   if (error) {
     // A row the server rejects outright (RLS, a deleted round) will never
