@@ -1,0 +1,265 @@
+import type { ReactNode } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { HIT_SIZE, radius, spacing, type as typeScale, useTheme } from '../theme';
+
+export function Screen({
+  children,
+  scroll = true,
+  padded = true,
+}: {
+  children: ReactNode;
+  scroll?: boolean;
+  padded?: boolean;
+}) {
+  const theme = useTheme();
+  const inner = (
+    <View style={{ padding: padded ? spacing.lg : 0, gap: spacing.md, flexGrow: 1 }}>
+      {children}
+    </View>
+  );
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top', 'left', 'right']}>
+      {scroll ? (
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+          {inner}
+        </ScrollView>
+      ) : (
+        inner
+      )}
+    </SafeAreaView>
+  );
+}
+
+export function Title({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
+  const theme = useTheme();
+  return <Text style={[typeScale.title, { color: theme.text }, style]}>{children}</Text>;
+}
+
+export function Heading({ children }: { children: ReactNode }) {
+  const theme = useTheme();
+  return <Text style={[typeScale.heading, { color: theme.text }]}>{children}</Text>;
+}
+
+export function Body({
+  children,
+  muted,
+  style,
+  numberOfLines,
+  onPress,
+}: {
+  children: ReactNode;
+  muted?: boolean;
+  style?: StyleProp<TextStyle>;
+  numberOfLines?: number;
+  onPress?: () => void;
+}) {
+  const theme = useTheme();
+  return (
+    <Text
+      numberOfLines={numberOfLines}
+      onPress={onPress}
+      style={[typeScale.body, { color: muted ? theme.muted : theme.text }, style]}
+    >
+      {children}
+    </Text>
+  );
+}
+
+export function Small({
+  children,
+  style,
+  onPress,
+}: {
+  children: ReactNode;
+  style?: StyleProp<TextStyle>;
+  onPress?: () => void;
+}) {
+  const theme = useTheme();
+  return (
+    <Text onPress={onPress} style={[typeScale.small, { color: theme.muted }, style]}>
+      {children}
+    </Text>
+  );
+}
+
+export function Card({
+  children,
+  onPress,
+  style,
+}: {
+  children: ReactNode;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const theme = useTheme();
+  const body = (
+    <View
+      style={[
+        {
+          backgroundColor: theme.card,
+          borderColor: theme.border,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderRadius: radius.md,
+          padding: spacing.lg,
+          gap: spacing.sm,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
+  if (!onPress) return body;
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button">
+      {body}
+    </Pressable>
+  );
+}
+
+export function Button({
+  title,
+  onPress,
+  variant = 'primary',
+  disabled,
+  loading,
+}: {
+  title: string;
+  onPress: () => void;
+  variant?: 'primary' | 'secondary' | 'danger';
+  disabled?: boolean;
+  loading?: boolean;
+}) {
+  const theme = useTheme();
+  const background =
+    variant === 'primary' ? theme.accent : variant === 'danger' ? theme.loss : 'transparent';
+  const color = variant === 'secondary' ? theme.text : theme.accentText;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: Boolean(disabled || loading) }}
+      disabled={disabled || loading}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        minHeight: HIT_SIZE,
+        borderRadius: radius.md,
+        paddingHorizontal: spacing.lg,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: background,
+        borderWidth: variant === 'secondary' ? StyleSheet.hairlineWidth : 0,
+        borderColor: theme.border,
+        opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
+      })}
+    >
+      {loading ? (
+        <ActivityIndicator color={color} />
+      ) : (
+        <Text style={[typeScale.heading, { color }]}>{title}</Text>
+      )}
+    </Pressable>
+  );
+}
+
+export function Row({
+  children,
+  gap = spacing.sm,
+  align = 'center',
+  justify = 'flex-start',
+  wrap,
+}: {
+  children: ReactNode;
+  gap?: number;
+  align?: ViewStyle['alignItems'];
+  justify?: ViewStyle['justifyContent'];
+  wrap?: boolean;
+}) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: align,
+        justifyContent: justify,
+        gap,
+        flexWrap: wrap ? 'wrap' : 'nowrap',
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+export function Money({ cents, size = 17 }: { cents: number; size?: number }) {
+  const theme = useTheme();
+  const color = cents > 0 ? theme.win : cents < 0 ? theme.loss : theme.muted;
+  const abs = Math.abs(cents);
+  const text = `${cents > 0 ? '+' : cents < 0 ? '−' : ''}${
+    abs % 100 === 0 ? `$${abs / 100}` : `$${(abs / 100).toFixed(2)}`
+  }`;
+  return <Text style={{ color, fontSize: size, fontWeight: '700' }}>{text}</Text>;
+}
+
+export function Pill({ label, tone = 'muted' }: { label: string; tone?: 'muted' | 'accent' | 'flag' }) {
+  const theme = useTheme();
+  const bg = tone === 'accent' ? theme.accent : tone === 'flag' ? theme.flag : theme.border;
+  const fg = tone === 'muted' ? theme.text : theme.accentText;
+  return (
+    <View
+      style={{
+        backgroundColor: bg,
+        borderRadius: radius.pill,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.xs,
+      }}
+    >
+      <Text style={{ color: fg, fontSize: 12, fontWeight: '600' }}>{label}</Text>
+    </View>
+  );
+}
+
+export function EmptyState({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <Card>
+      <Heading>{title}</Heading>
+      {hint ? <Body muted>{hint}</Body> : null}
+    </Card>
+  );
+}
+
+export function Loading({ label }: { label?: string }) {
+  const theme = useTheme();
+  return (
+    <View style={{ padding: spacing.xl, alignItems: 'center', gap: spacing.sm }}>
+      <ActivityIndicator color={theme.accent} />
+      {label ? <Small>{label}</Small> : null}
+    </View>
+  );
+}
+
+export function ErrorNote({ error }: { error: unknown }) {
+  const theme = useTheme();
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    <Card style={{ borderColor: theme.loss }}>
+      <Heading>Something went wrong</Heading>
+      <Body muted>{message}</Body>
+    </Card>
+  );
+}
+
+export function Divider() {
+  const theme = useTheme();
+  return <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.border }} />;
+}

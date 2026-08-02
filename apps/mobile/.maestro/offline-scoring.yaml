@@ -1,0 +1,41 @@
+# E2E flow 2 (Technical Spec §10): offline scoring sync.
+# The gate for M3: score with the radio off, kill the app, reopen, reconnect,
+# and the card must be identical with nothing lost and nothing duplicated.
+appId: golf.halve.app
+---
+- launchApp
+- tapOn: 'Rounds'
+- tapOn:
+    text: 'Copperhead'
+    index: 0
+- tapOn: 'Open the card'
+
+# Radio off. Everything from here is local.
+- setAirplaneMode: enabled
+- assertVisible: 'Offline — scores saved'
+
+- repeat:
+    times: 10
+    commands:
+      - tapOn: 'increase'
+      - tapOn: 'Next ▶'
+
+- assertVisible:
+    text: 'entries waiting to sync'
+
+# Force-quit mid-round. Nothing may be lost.
+- stopApp
+- launchApp
+- tapOn: 'Rounds'
+- tapOn:
+    text: 'Copperhead'
+    index: 0
+- tapOn: 'Open the card'
+- tapOn: 'Full card'
+- assertNoDefectsWithAI
+
+# Reconnect and let the outbox drain.
+- setAirplaneMode: disabled
+- extendedWaitUntil:
+    visible: 'All scores synced'
+    timeout: 30000

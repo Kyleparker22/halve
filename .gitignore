@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.expo/
+.expo-shared/
+ios/
+android/
+*.log
+.env
+.env.*
+!.env.example
+coverage/
+.DS_Store
+supabase/.branches/
+supabase/.temp/
+supabase/functions/_shared/
+*.tsbuildinfo

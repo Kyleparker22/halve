@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "Halve",
+    "slug": "halve",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "halve",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "golf.halve.app",
+      "associatedDomains": ["applinks:halve.golf"],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "LSApplicationQueriesSchemes": ["venmo", "cashapp"]
+      }
+    },
+    "android": {
+      "package": "golf.halve.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B3D2E"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "https", "host": "halve.golf", "pathPrefix": "/join" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
+      "queries": [{ "scheme": "venmo" }, { "scheme": "cashapp" }]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "color": "#0B3D2E"
+        }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "halve",
+          "project": "halve-mobile"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+# E2E flow 1 (Technical Spec §10): invite → crew → round → score 18 → settle.
+# Run with: pnpm --filter @halve/mobile e2e
+appId: golf.halve.app
+---
+- launchApp:
+    clearState: true
+
+# Sign in with the seeded development account.
+- tapOn: 'Continue with Apple'
+- assertVisible: 'Crews'
+
+# Create a crew and pull up its invite link.
+- tapOn: 'New crew'
+- tapOn:
+    id: 'crew-name'
+- inputText: 'Maestro Crew'
+- tapOn: 'Create crew'
+- assertVisible: 'Maestro Crew'
+- tapOn: 'Invite to the crew'
+- back
+
+# Schedule a round.
+- tapOn: 'Schedule a round'
+- tapOn: 'Maestro Crew'
+- tapOn:
+    id: 'course-search'
+- inputText: 'Copperhead'
+- tapOn: 'Copperhead'
+- tapOn: 'Schedule it'
+- assertVisible: 'Copperhead'
+
+# Add a Nassau, then score all 18.
+- tapOn: 'Add'
+- tapOn: 'Nassau'
+- tapOn: 'Add game'
+- tapOn: 'Start the round'
+
+- repeat:
+    times: 18
+    commands:
+      - tapOn: 'increase'
+      - tapOn: 'Next ▶'
+
+- tapOn: 'Finish'
+- assertVisible: 'Leaderboard'
+- tapOn: 'Finish and settle'
+- assertVisible: 'This round is settled'
+
+# Settle the ledger.
+- tapOn: 'Open the crew ledger'
+- assertVisible: 'Where everyone stands'
+- tapOn: 'Settle in'
+- assertVisible: 'The smallest set of payments'
