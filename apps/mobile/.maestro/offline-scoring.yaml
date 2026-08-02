@@ -12,12 +12,18 @@ appId: golf.halve.app
 ---
 - launchApp
 
-- tapOn: 'Rounds'
+# A debug build has to bundle before anything renders; launchApp returns
+# well before that, so every cold start needs an explicit wait.
+- extendedWaitUntil:
+    visible: 'Crews'
+    timeout: 90000
+
+- tapOn: 'Rounds, tab.*'
 - tapOn:
-    text: 'Copperhead'
+    text: '.*Copperhead.*'
     index: 0
 - tapOn:
-    text: 'Open the card|Start the round'
+    text: '.*Open the card.*|.*Start the round.*'
 
 # Score five holes.
 - repeat:
@@ -33,18 +39,24 @@ appId: golf.halve.app
 - stopApp
 - launchApp
 
-- tapOn: 'Rounds'
+# A debug build has to bundle before anything renders; launchApp returns
+# well before that, so every cold start needs an explicit wait.
+- extendedWaitUntil:
+    visible: 'Crews'
+    timeout: 90000
+
+- tapOn: 'Rounds, tab.*'
 - tapOn:
-    text: 'Copperhead'
+    text: '.*Copperhead.*'
     index: 0
 - tapOn:
-    text: 'Open the card|Start the round'
-- tapOn: 'Full card'
+    text: '.*Open the card.*|.*Start the round.*'
+- tapOn: '.*Full card.*'
 
 # The five scores are still on the card after the process was killed.
-- assertVisible: 'Hole'
+- assertVisible: '.*Hole.*'
 - assertVisible:
-    text: 'Par'
+    text: '.*Par.*'
 
 - back
 - extendedWaitUntil:

@@ -1,68 +1,110 @@
 # E2E flow 1 (Technical Spec §10): invite → crew → round → score 18 → settle.
 #
+#   supabase db reset          # REQUIRED: the flow completes and settles a
+#                              # seeded round, so it is not idempotent
 #   pnpm --filter @halve/mobile e2e
 #
-# Preconditions, both of which matter:
-#   1. `supabase db reset` first. The flow completes and settles a seeded round,
-#      which is not idempotent — a second run finds it already settled.
-#   2. A debug build installed. The dev sign-in this flow uses is behind __DEV__
-#      and does not exist in a release binary.
+# Needs a debug build installed — the dev sign-in is behind __DEV__.
 #
-# It joins the seeded crew by invite code rather than creating an empty one:
-# a crew of one has nobody to win money from, so there would be nothing to
-# settle. Joining by code is also the real invite path.
+# Selector notes, learned the hard way:
+#   - Maestro anchors its text regex to the whole string, and iOS merges a
+#     card's Text nodes into one accessibility label. Anything inside a card
+#     needs .*wildcards.*
+#   - Tab bar items expose no `text`, only accessibilityText of the form
+#     "Rounds, tab, 2 of 4".
+#   - A debug build bundles before it renders, so every cold start needs a wait.
 appId: golf.halve.app
 ---
 - launchApp:
     clearState: true
 
-# Apple and Google are credential-gated, so the dev email path is the only one
-# that works against a local or staging project.
-- assertVisible: 'Development sign-in'
-- tapOn:
-    id: 'dev-email'
-- inputText: 'maestro@example.com'
-- tapOn:
-    id: 'dev-password'
-- inputText: 'maestro-e2e-password'
-- tapOn: 'Sign in (dev)'
+# clearState does not sign the user out: the Supabase session lives in the iOS
+# Keychain, which survives an app data wipe. So sign-in is conditional on
+# actually landing on the sign-in screen.
+- extendedWaitUntil:
+    visible: '.*Halve.*'
+    timeout: 120000
 
-# First run creates the account, which lands on onboarding.
 - runFlow:
     when:
-      visible: 'Set up your profile'
+      visible: '.*Development sign-in.*'
     commands:
-      - tapOn: 'Start playing'
+      - tapOn:
+          id: 'dev-email'
+      - inputText: 'maestro@example.com'
+      - tapOn:
+          id: 'dev-password'
+      - inputText: 'maestro-e2e-password'
+      - tapOn: 'Sign in \(dev\)'
+      # A first run creates the account and lands on onboarding.
+      - runFlow:
+          when:
+            visible: '.*Set up your profile.*'
+          commands:
+            - tapOn: 'Start playing'
 
-- assertVisible: 'Crews'
+- extendedWaitUntil:
+    visible: 'Crews'
+    timeout: 60000
 
-# Invite path: join the seeded crew by its code.
+# The invite path: join the seeded crew by its code. A crew of one has no
+# counterparty, so creating a fresh crew would leave nothing to settle.
 - tapOn: 'New crew'
 - tapOn:
     id: 'join-code'
 - inputText: 'sat4some01'
 - tapOn: 'Join'
-- assertVisible: 'Saturday Regulars'
-- assertVisible: 'Your balance'
+- extendedWaitUntil:
+    visible: '.*Saturday Regulars.*'
+    timeout: 30000
+- assertVisible: '.*Your balance.*'
 
-# The seeded upcoming round already has Kyle and Todd in it.
-- tapOn: 'Rounds'
+# Joining replaces the route with the crew screen, pushed over the tabs. The
+# tab bar is unreachable until it is popped, and Maestro's `back` does not pop
+# this native stack — tap the header back button instead.
+- tapOn: 'Back'
+
+# The seeded upcoming round already has two players in it.
+- tapOn: 'Rounds, tab.*'
+- extendedWaitUntil:
+    visible: 'Schedule'
+    timeout: 30000
 - tapOn:
-    text: 'Copperhead'
+    text: '.*Copperhead.*'
     index: 0
-- assertVisible: 'Roster'
+- extendedWaitUntil:
+    visible: 'Roster'
+    timeout: 30000
 
-# A Nassau over the two players who are in.
+# A Nassau over the two who are in.
 - tapOn: 'Add'
+- extendedWaitUntil:
+    visible: '.*Add a game.*'
+    timeout: 30000
 - tapOn: 'Nassau'
 - tapOn: 'Add game'
-- assertVisible:
-    text: 'Nassau'
-- tapOn: 'Start the round'
+- extendedWaitUntil:
+    visible: '.*Nassau.*'
+    timeout: 30000
 
-# One tap per player records par; two players, so index 0 and 1.
+- tapOn: 'Start the round'
+- extendedWaitUntil:
+    visible: '.*Hole 1.*'
+    timeout: 30000
+
+# Hole 1: par for the first player, a bogey for the second, so the Nassau has
+# a winner. All-square would settle to nothing and prove less.
+- tapOn:
+    id: 'score-par'
+    index: 0
+- tapOn:
+    text: 'increase'
+    index: 1
+- tapOn: 'Next ▶'
+
+# Holes 2–17 at par for both.
 - repeat:
-    times: 18
+    times: 16
     commands:
       - tapOn:
           id: 'score-par'
@@ -72,22 +114,32 @@ appId: golf.halve.app
           index: 1
       - tapOn: 'Next ▶'
 
-# All 18 scored at par means the Nassau is halved and no money moves, so the
-# last hole gets a birdie to force a result worth settling.
-- tapOn: 'Prev ◀'
+# Hole 18 has a Finish button rather than Next.
 - tapOn:
-    text: '−'
+    id: 'score-par'
     index: 0
+- tapOn:
+    id: 'score-par'
+    index: 1
 - tapOn: 'Finish'
 
-- assertVisible: 'Leaderboard'
+- extendedWaitUntil:
+    visible: 'Leaderboard'
+    timeout: 30000
 - tapOn: 'Finish and settle'
-- assertVisible: 'This round is settled'
+- extendedWaitUntil:
+    visible: '.*This round is settled.*'
+    timeout: 60000
 
 - tapOn: 'Open the crew ledger'
-- assertVisible: 'Where everyone stands'
-- tapOn:
-    text: 'Settle in'
-- assertVisible: 'The smallest set of payments'
+- extendedWaitUntil:
+    visible: '.*Where everyone stands.*'
+    timeout: 30000
+- tapOn: '.*Settle in.*'
+- extendedWaitUntil:
+    visible: '.*The smallest set of payments.*'
+    timeout: 30000
 - tapOn: 'Request these payments'
-- assertVisible: 'Waiting on'
+- extendedWaitUntil:
+    visible: '.*Waiting on.*'
+    timeout: 30000

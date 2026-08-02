@@ -8,19 +8,22 @@
 appId: golf.halve.app
 ---
 - launchApp
+- extendedWaitUntil:
+    visible: 'Crews'
+    timeout: 90000
 
-- tapOn: 'Rounds'
+- tapOn: 'Rounds, tab.*'
 - tapOn:
-    text: 'Copperhead'
+    text: '.*Copperhead.*'
     index: 0
 - tapOn:
-    text: 'Open the card|Start the round'
+    text: '.*Open the card.*|.*Start the round.*'
 
 # Radio off. Everything from here is local; the banner is reassurance, never a
 # blocking modal.
 - setAirplaneMode: enabled
 - extendedWaitUntil:
-    visible: 'Offline — scores saved'
+    visible: '.*Offline — scores saved.*'
     timeout: 15000
 
 - repeat:
@@ -33,22 +36,22 @@ appId: golf.halve.app
 
 # Entries queue rather than fail.
 - assertVisible:
-    text: 'waiting to sync'
+    text: '.*waiting to sync.*'
 
 # Force-quit while still offline.
 - stopApp
 - launchApp
-- tapOn: 'Rounds'
+- tapOn: 'Rounds, tab.*'
 - tapOn:
-    text: 'Copperhead'
+    text: '.*Copperhead.*'
     index: 0
 - tapOn:
-    text: 'Open the card|Start the round'
+    text: '.*Open the card.*|.*Start the round.*'
 - assertVisible:
-    text: 'waiting to sync'
+    text: '.*waiting to sync.*'
 
 # Reconnect and let the outbox drain.
 - setAirplaneMode: disabled
 - extendedWaitUntil:
-    visible: 'All scores synced'
+    visible: '.*All scores synced.*'
     timeout: 60000

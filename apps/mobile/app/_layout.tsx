@@ -56,6 +56,9 @@ function RootNavigator() {
           headerTintColor: theme.text,
           headerTitleStyle: { color: theme.text },
           contentStyle: { backgroundColor: theme.bg },
+          // Without this the back button inherits the previous route's title,
+          // which for the tab group is the literal string "(tabs)".
+          headerBackTitle: 'Back',
         }}
       >
         {/* Without an explicit title expo-router shows the raw route path. */}
