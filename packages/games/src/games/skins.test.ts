@@ -54,7 +54,7 @@ describe('skins — $5, gross, carryover on', () => {
     const result = computeGame(config, COURSE, players, scores);
     const line = result.breakdown.find((l) => l.text.startsWith('Hole 3'))!;
     expect(line.text).toBe(
-      'Hole 3 — Kyle made par. 3 skins (carried from 1, 2) @ $5 = $15 from each of 3.',
+      'Hole 3 — Kyle made par. 3 skins (carried from 1, 2) @ $5 = $15 from each of 3 players.',
     );
     expect(line.holes).toEqual([1, 2, 3]);
   });

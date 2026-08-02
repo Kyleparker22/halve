@@ -77,15 +77,20 @@ export function computeSkins(config: SkinsConfig, card: Card): GameResult {
     const carriedText = carried.length
       ? ` ${skins} skins (carried from ${carried.join(', ')})`
       : ' 1 skin';
+    // "from Todd" beats "from each of 1" — a breakdown is read by someone who
+    // wants to argue with it.
+    const fromWhom =
+      losers.length === 1
+        ? `from ${card.name(losers[0]!)}`
+        : `from each of ${losers.length} players`;
+
     breakdown.push({
       holes: [hole.number, ...carried].sort((a, b) => a - b),
       players: [winner.id],
       amountCents: amount * losers.length,
       text:
         `Hole ${hole.number} — ${card.name(winner.id)} ${describeScore(netToPar)}.` +
-        `${carriedText} @ ${formatCents(stake)} = ${formatCents(amount)} from each of ${
-          losers.length
-        }.`,
+        `${carriedText} @ ${formatCents(stake)} = ${formatCents(amount)} ${fromWhom}.`,
     });
     carried = [];
   }

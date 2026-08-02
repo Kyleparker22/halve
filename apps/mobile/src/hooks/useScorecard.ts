@@ -55,6 +55,13 @@ export interface Scorecard {
 
 const EMPTY: ScorecardEntry = { strokes: null, putts: null, penalties: null, pending: false };
 
+/**
+ * Supabase resolves channels by topic, so two screens mounting this hook for
+ * the same round would land on one already-subscribed channel — and adding
+ * listeners after subscribe() throws. Each mount gets its own topic.
+ */
+let channelSequence = 0;
+
 export function useScorecard(bundle: RoundBundle | undefined): Scorecard {
   const roundId = bundle?.round.id;
   const revision = useScorecardRevision();
@@ -81,12 +88,17 @@ export function useScorecard(bundle: RoundBundle | undefined): Scorecard {
     }
   }), []);
 
+  const channelTopic = useMemo(
+    () => `round:${roundId ?? 'none'}:${(channelSequence += 1)}`,
+    [roundId],
+  );
+
   // Realtime is an enhancement. With the socket down the card works the same.
   useEffect(() => {
     if (!roundId || !bundle?.roster.length) return;
     const ids = bundle.roster.map((p) => p.id);
     const channel = supabase
-      .channel(`round:${roundId}`)
+      .channel(channelTopic)
       .on(
         'postgres_changes',
         {
@@ -105,7 +117,7 @@ export function useScorecard(bundle: RoundBundle | undefined): Scorecard {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [roundId, bundle?.roster]);
+  }, [channelTopic, roundId, bundle?.roster]);
 
   const scores: Record<string, LocalScore> = useMemo(
     () => (roundId ? readScores(roundId) : {}),
