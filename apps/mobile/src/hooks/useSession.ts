@@ -75,6 +75,31 @@ export function useSignInWithProvider() {
   });
 }
 
+/**
+ * Development only. Apple needs a paid developer account, Google needs OAuth
+ * credentials and phone OTP needs Twilio — none of which should stand between
+ * a developer and a running app. Signs in if the account exists, creates it if
+ * not. Gated behind __DEV__ at the call site so it cannot ship.
+ */
+export function useDevEmailSignIn() {
+  return useMutation({
+    mutationFn: async ({ email, password }: { email: string; password: string }) => {
+      const signIn = await supabase.auth.signInWithPassword({ email, password });
+      if (!signIn.error) return signIn.data;
+
+      const signUp = await supabase.auth.signUp({ email, password });
+      if (signUp.error) throw signUp.error;
+      if (!signUp.data.session) {
+        throw new Error(
+          'Account created but no session — email confirmations are on for this project. ' +
+            'Turn them off in Auth settings, or run `supabase config push`.',
+        );
+      }
+      return signUp.data;
+    },
+  });
+}
+
 export function useUpdateProfile(profileId: string | undefined) {
   const client = useQueryClient();
   return useMutation({

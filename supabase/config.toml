@@ -47,13 +47,17 @@ enable_confirmations = false
 enable_signup = true
 enable_confirmations = true
 
+# Apple and Google are the shipping sign-in paths (Apple is mandatory for the
+# App Store once Google exists). Both are off until real credentials exist —
+# enabling a provider with empty secrets just breaks the auth service. Set the
+# env vars, flip these to true, and run `supabase config push`.
 [auth.external.apple]
-enabled = true
+enabled = false
 client_id = "env(SUPABASE_AUTH_APPLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_APPLE_SECRET)"
 
 [auth.external.google]
-enabled = true
+enabled = false
 client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
 

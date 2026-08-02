@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Body, Button, Card, Screen, Small, Title } from '../../src/components/ui';
-import { useSignInWithOtp, useSignInWithProvider, useVerifyOtp } from '../../src/hooks/useSession';
+import {
+  useDevEmailSignIn,
+  useSignInWithOtp,
+  useSignInWithProvider,
+  useVerifyOtp,
+} from '../../src/hooks/useSession';
 import { radius, spacing, useTheme } from '../../src/theme';
 
 export default function SignIn() {
@@ -11,10 +16,13 @@ export default function SignIn() {
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
+  const [devEmail, setDevEmail] = useState('');
+  const [devPassword, setDevPassword] = useState('');
 
   const provider = useSignInWithProvider();
   const otp = useSignInWithOtp();
   const verify = useVerifyOtp();
+  const devSignIn = useDevEmailSignIn();
 
   const input = {
     borderWidth: 1,
@@ -88,6 +96,48 @@ export default function SignIn() {
         {otp.error ? <Small>{(otp.error as Error).message}</Small> : null}
         {verify.error ? <Small>{(verify.error as Error).message}</Small> : null}
       </Card>
+
+      {__DEV__ ? (
+        <Card>
+          <Body>Development sign-in</Body>
+          <Small>
+            Never shipped — this block is compiled out of a release build. Signs you in, or creates
+            the account if it does not exist yet.
+          </Small>
+          <TextInput
+            style={input}
+            value={devEmail}
+            onChangeText={setDevEmail}
+            placeholder="you@example.com"
+            placeholderTextColor={theme.muted}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+          />
+          <TextInput
+            style={input}
+            value={devPassword}
+            onChangeText={setDevPassword}
+            placeholder="password"
+            placeholderTextColor={theme.muted}
+            autoCapitalize="none"
+            secureTextEntry
+          />
+          <Button
+            title="Sign in (dev)"
+            variant="secondary"
+            loading={devSignIn.isPending}
+            disabled={devEmail.trim().length === 0 || devPassword.length < 6}
+            onPress={() =>
+              devSignIn.mutate(
+                { email: devEmail.trim(), password: devPassword },
+                { onSuccess: () => router.replace('/(auth)/onboarding') },
+              )
+            }
+          />
+          {devSignIn.error ? <Small>{(devSignIn.error as Error).message}</Small> : null}
+        </Card>
+      ) : null}
 
       <Small>
         Halve records friendly wagers between people who know each other. It never holds or moves
