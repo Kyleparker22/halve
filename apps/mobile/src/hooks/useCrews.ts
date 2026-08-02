@@ -9,13 +9,18 @@ export interface CrewSummary extends CrewRow {
   memberCount: number;
 }
 
-export function useCrews() {
+export function useCrews(profileId: string | undefined) {
   return useQuery({
-    queryKey: queryKeys.crews,
+    queryKey: [...queryKeys.crews, profileId],
+    enabled: Boolean(profileId),
     queryFn: async (): Promise<CrewSummary[]> => {
+      // Filter to my own membership rows. RLS lets me read the whole roster of
+      // any crew I belong to, so without this the list returns one row per
+      // member and the same crew appears N times.
       const { data, error } = await supabase
         .from('crew_members')
         .select('role, crews!inner(*), crew_id')
+        .eq('profile_id', profileId!)
         .order('joined_at', { ascending: true });
       if (error) throw error;
 

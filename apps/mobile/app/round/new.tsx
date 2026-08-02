@@ -21,7 +21,7 @@ export default function NewRoundScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { session } = useSession();
-  const crews = useCrews();
+  const crews = useCrews(session?.user.id);
   const create = useCreateRound();
 
   const [crewId, setCrewId] = useState<string | null>(null);

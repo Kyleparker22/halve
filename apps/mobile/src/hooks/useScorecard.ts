@@ -189,17 +189,33 @@ export function useScorecard(bundle: RoundBundle | undefined): Scorecard {
 
   const moneyLine: MoneyLine[] = useMemo(() => {
     if (!bundle) return [];
-    const players: Player[] = bundle.roster.map((p) => ({
-      roundPlayerId: p.id,
-      playingHandicap: p.playingHandicap ?? 0,
-      name: p.name,
-    }));
 
-    return bundle.games.map((game) => ({
-      gameId: game.id,
-      label: game.name ?? game.type,
-      result: computeGame(game.config, bundle.holes, players, engineScores),
-    }));
+    return bundle.games.map((game) => {
+      // Only the players actually in this game. A Nassau between two of the
+      // four is not a four-way round robin, and the server settles it from
+      // the same participant list — the two must agree to the cent.
+      // ?? [] because a cache persisted by an older build predates this field.
+      const participants = game.participants ?? [];
+      const inGame = participants.length
+        ? bundle.roster.filter((p) => participants.some((gp) => gp.roundPlayerId === p.id))
+        : bundle.roster;
+
+      const players: Player[] = inGame.map((p) => {
+        const team = participants.find((gp) => gp.roundPlayerId === p.id)?.teamId;
+        return {
+          roundPlayerId: p.id,
+          playingHandicap: p.playingHandicap ?? 0,
+          name: p.name,
+          ...(team ? { teamId: team } : {}),
+        };
+      });
+
+      return {
+        gameId: game.id,
+        label: game.name ?? game.type,
+        result: computeGame(game.config, bundle.holes, players, engineScores),
+      };
+    });
   }, [bundle, engineScores]);
 
   return {

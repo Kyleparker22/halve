@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { QueryClient } from '@tanstack/react-query';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { queryStore } from './storage';
@@ -32,6 +33,13 @@ export const persister = createAsyncStoragePersister({
   key: 'halve.query-cache',
   throttleTime: 1000,
 });
+
+/**
+ * Bump with any change to a cached payload's shape. Without it, an update that
+ * adds a field reads it back as undefined from a cache written by the previous
+ * build — which surfaces as a render crash on someone else's phone, not yours.
+ */
+export const CACHE_BUSTER = `${Constants.expoConfig?.version ?? '0'}-2`;
 
 export const queryKeys = {
   session: ['session'] as const,

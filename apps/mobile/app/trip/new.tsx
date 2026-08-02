@@ -11,7 +11,7 @@ export default function NewTripScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { session } = useSession();
-  const crews = useCrews();
+  const crews = useCrews(session?.user.id);
   const create = useCreateTrip();
 
   const [crewId, setCrewId] = useState<string | null>(null);

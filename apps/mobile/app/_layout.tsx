@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { persister, queryClient } from '../src/lib/query';
+import { CACHE_BUSTER, persister, queryClient } from '../src/lib/query';
 import { startSyncEngine } from '../src/lib/sync';
 import { identify, initTelemetry } from '../src/lib/analytics';
 import { registerDevice } from '../src/lib/notifications';
@@ -58,9 +58,25 @@ function RootNavigator() {
           contentStyle: { backgroundColor: theme.bg },
         }}
       >
+        {/* Without an explicit title expo-router shows the raw route path. */}
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="crew/new" options={{ title: 'New crew' }} />
+        <Stack.Screen name="crew/[id]/index" options={{ title: 'Crew' }} />
+        <Stack.Screen name="crew/[id]/ledger" options={{ title: 'Ledger' }} />
+        <Stack.Screen name="crew/[id]/settle" options={{ title: 'Settle up' }} />
+        <Stack.Screen name="round/new" options={{ title: 'Schedule a round' }} />
+        <Stack.Screen name="round/[id]/index" options={{ title: 'Round' }} />
         <Stack.Screen name="round/[id]/score" options={{ title: 'Scorecard' }} />
+        <Stack.Screen name="round/[id]/card" options={{ title: 'Full card' }} />
+        <Stack.Screen name="round/[id]/games" options={{ title: 'Games' }} />
+        <Stack.Screen name="round/[id]/recap" options={{ title: 'Recap' }} />
+        <Stack.Screen name="trip/new" options={{ title: 'New trip' }} />
+        <Stack.Screen name="trip/[id]/index" options={{ title: 'Trip' }} />
+        <Stack.Screen name="trip/[id]/expenses" options={{ title: 'Expenses' }} />
+        <Stack.Screen name="chat/[scope]/[id]" options={{ title: 'Chat' }} />
+        <Stack.Screen name="settings/notifications" options={{ title: 'Notifications' }} />
+        <Stack.Screen name="seats" options={{ title: 'Open seats' }} />
         <Stack.Screen name="join/[code]" options={{ title: 'Join' }} />
       </Stack>
     </>
@@ -71,7 +87,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+        <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, buster: CACHE_BUSTER }}>
           <RootNavigator />
         </PersistQueryClientProvider>
       </SafeAreaProvider>

@@ -77,7 +77,10 @@ export function useRoundBundle(roundId: string | undefined) {
           .select('*, profiles(id, display_name, handle, avatar_url), crew_guests(id, name, vouched_by)')
           .eq('round_id', roundId!)
           .order('position'),
-        supabase.from('games').select('*').eq('round_id', roundId!),
+        supabase
+          .from('games')
+          .select('*, game_participants(round_player_id, team_id)')
+          .eq('round_id', roundId!),
       ]);
 
       const roster: RosterEntry[] = (
@@ -121,9 +124,19 @@ export function useRoundBundle(roundId: string | undefined) {
           yardage: h.yardage,
         })),
         roster,
-        games: ((games ?? []) as GameRow[]).map((game) => ({
+        games: (
+          (games ?? []) as unknown as Array<
+            GameRow & {
+              game_participants: Array<{ round_player_id: string; team_id: string | null }>;
+            }
+          >
+        ).map((game) => ({
           ...game,
           config: game.config as unknown as GameConfig,
+          participants: (game.game_participants ?? []).map((p) => ({
+            roundPlayerId: p.round_player_id,
+            teamId: p.team_id,
+          })),
         })),
       };
     },

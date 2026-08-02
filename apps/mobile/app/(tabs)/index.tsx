@@ -21,7 +21,7 @@ import { useCrewBalancesForMe } from '../../src/hooks/useBalances';
 export default function CrewsScreen() {
   const router = useRouter();
   const { session } = useSession();
-  const crews = useCrews();
+  const crews = useCrews(session?.user.id);
   const balances = useCrewBalancesForMe(session?.user.id);
   const seats = useOpenSeats();
 
@@ -52,8 +52,8 @@ export default function CrewsScreen() {
             <Money cents={balanceFor(crew.id)} />
           </Row>
           <Small>
-            {crew.memberCount} {crew.memberCount === 1 ? 'member' : 'members'} · you are the{' '}
-            {crew.role}
+            {crew.memberCount} {crew.memberCount === 1 ? 'member' : 'members'} ·{' '}
+            {crew.role === 'member' ? "you're a member" : `you're the ${crew.role}`}
           </Small>
         </Card>
       ))}

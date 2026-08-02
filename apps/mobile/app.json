@@ -10,10 +10,15 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "golf.halve.app",
-      "associatedDomains": ["applinks:halve.golf"],
+      "associatedDomains": [
+        "applinks:halve.golf"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "LSApplicationQueriesSchemes": ["venmo", "cashapp"]
+        "LSApplicationQueriesSchemes": [
+          "venmo",
+          "cashapp"
+        ]
       }
     },
     "android": {
@@ -25,11 +30,27 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "https", "host": "halve.golf", "pathPrefix": "/join" }],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "data": [
+            {
+              "scheme": "https",
+              "host": "halve.golf",
+              "pathPrefix": "/join"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
-      "queries": [{ "scheme": "venmo" }, { "scheme": "cashapp" }]
+      "queries": [
+        {
+          "scheme": "venmo"
+        },
+        {
+          "scheme": "cashapp"
+        }
+      ]
     },
     "plugins": [
       "expo-router",
@@ -46,7 +67,9 @@
           "organization": "halve",
           "project": "halve-mobile"
         }
-      ]
+      ],
+      "@sentry/react-native",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true

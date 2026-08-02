@@ -130,8 +130,18 @@ export interface RoundBundle {
   teeName: string | null;
   holes: Array<{ number: number; par: number; strokeIndex: number; yardage: number | null }>;
   roster: RosterEntry[];
-  /** config is parsed into the engine's discriminated union, not raw Json. */
-  games: Array<Omit<GameRow, 'config'> & { config: GameConfig }>;
+  /**
+   * config is parsed into the engine's discriminated union, not raw Json.
+   * `participants` is load-bearing: a game is often a subset of the roster
+   * (a Nassau between two of the four), and computing it over everyone
+   * produces a different number than the server will.
+   */
+  games: Array<
+    Omit<GameRow, 'config'> & {
+      config: GameConfig;
+      participants: Array<{ roundPlayerId: string; teamId: string | null }>;
+    }
+  >;
 }
 
 /** A score as the client holds it: server state plus whether it is still pending. */
