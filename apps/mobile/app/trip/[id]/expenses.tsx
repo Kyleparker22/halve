@@ -16,6 +16,7 @@ import {
   Title,
 } from '../../../src/components/ui';
 import { useAddExpense, useTrip, useTripExpenses } from '../../../src/hooks/useTrips';
+import { Receipt } from '../../../src/components/Receipt';
 import { radius, spacing, useTheme } from '../../../src/theme';
 
 export default function ExpensesScreen() {
@@ -89,6 +90,11 @@ export default function ExpensesScreen() {
             {nameFor(expense.paid_by)} paid · split {expense.trip_expense_shares.length} ways
             {expense.room_id ? ' · from a room' : ''}
           </Small>
+          {/* Room expenses are generated from the room's cost — there is no
+              receipt to attach and offering one would be confusing. */}
+          {expense.room_id ? null : (
+            <Receipt tripId={id} expenseId={expense.id} receiptPath={expense.receipt_url} />
+          )}
         </Card>
       ))}
 

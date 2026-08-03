@@ -366,6 +366,58 @@ export function useCompleteTrip(tripId: string) {
   });
 }
 
+/**
+ * Attaches a receipt photo to an expense.
+ *
+ * The bucket is private, so nothing here produces a public URL: the object path
+ * is stored and read back through a signed URL. A receipt carries a card's last
+ * four, a place and a time, which is not something to leave world-readable
+ * behind a guessable address.
+ */
+export function useAttachReceipt(tripId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ expenseId, uri }: { expenseId: string; uri: string }) => {
+      const response = await fetch(uri);
+      const body = await response.arrayBuffer();
+      const extension = uri.split('.').pop()?.toLowerCase().split('?')[0] ?? 'jpg';
+      const path = `${tripId}/${expenseId}.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('receipts')
+        .upload(path, body, {
+          contentType: response.headers.get('content-type') ?? `image/${extension}`,
+          upsert: true,
+        });
+      if (uploadError) throw uploadError;
+
+      const { error } = await supabase
+        .from('trip_expenses')
+        .update({ receipt_url: path })
+        .eq('id', expenseId);
+      if (error) throw error;
+      return path;
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.tripExpenses(tripId) }),
+  });
+}
+
+/** Signed URL for a stored receipt path. Expires — that is the point of it. */
+export function useReceiptUrl(path: string | null | undefined) {
+  return useQuery({
+    queryKey: ['receipt', path ?? 'none'],
+    enabled: Boolean(path),
+    staleTime: 1000 * 60 * 30,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.storage
+        .from('receipts')
+        .createSignedUrl(path!, 60 * 60);
+      if (error) throw error;
+      return data?.signedUrl ?? null;
+    },
+  });
+}
+
 export function useJoinTrip() {
   const client = useQueryClient();
   return useMutation({

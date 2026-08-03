@@ -18,8 +18,6 @@
         "ITSAppUsesNonExemptEncryption": false,
         "LSApplicationQueriesSchemes": [
           "venmo",
-          "cashapp",
-          "venmo",
           "cashapp"
         ]
       },
@@ -81,6 +79,12 @@
       "expo-router",
       "expo-apple-authentication",
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Halve attaches receipt photos to trip expenses, so the crew can see what a shared cost actually was."
+        }
+      ],
       [
         "expo-notifications",
         {
