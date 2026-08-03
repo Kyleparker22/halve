@@ -22,19 +22,32 @@ Run this in your own terminal. Nothing prints the secret to a log, and it is
 never written to a file in the repo.
 
 ```bash
-SECRET=$(openssl rand -hex 32) && supabase secrets set PUSH_DISPATCH_SECRET="$SECRET" >/dev/null && echo "select vault.create_secret('$SECRET', 'push_dispatch_secret');"
+SECRET=$(openssl rand -hex 32) && supabase secrets set PUSH_DISPATCH_SECRET="$SECRET" >/dev/null && echo "select set_push_dispatch_secret('$SECRET');"
 ```
 
 That sets the function side and prints one SQL statement.
 
+Running it twice is safe and is in fact the fix for a mismatch: each run
+generates a fresh value and sets both sides to it. What is *not* safe is
+running it twice and only pasting the SQL once — the function would then hold a
+newer secret than the database, and every dispatch would 401 silently, once a
+minute, forever.
+
 ### 2. Paste that statement into the SQL editor
 
-Dashboard → SQL Editor. Run the printed `create_secret` line, then this one,
-which tells the database where the functions live:
+Dashboard → SQL Editor. Run the printed line, then this one, which tells the
+database where the functions live:
 
 ```sql
 select vault.create_secret(
   'https://<project-ref>.supabase.co/functions/v1', 'functions_base_url');
+```
+
+Confirm both landed — a failed statement aborts the whole batch in the SQL
+editor, so a duplicate-key error on one line silently discards the other:
+
+```sql
+select name, created_at, updated_at from vault.secrets;
 ```
 
 ### 3. Kick the scheduler
