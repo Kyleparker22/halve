@@ -11,11 +11,14 @@
       "supportsTablet": false,
       "bundleIdentifier": "golf.halve.app",
       "associatedDomains": [
+        "applinks:halve.golf",
         "applinks:halve.golf"
       ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "LSApplicationQueriesSchemes": [
+          "venmo",
+          "cashapp",
           "venmo",
           "cashapp"
         ]
@@ -42,9 +45,30 @@
             "BROWSABLE",
             "DEFAULT"
           ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "halve.golf",
+              "pathPrefix": "/join"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "queries": [
+        {
+          "scheme": "venmo"
+        },
+        {
+          "scheme": "cashapp"
+        },
         {
           "scheme": "venmo"
         },
@@ -82,6 +106,12 @@
       },
       "router": {}
     },
-    "owner": "kyleparker22"
+    "owner": "kyleparker22",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/539b8861-9a0f-4c33-8bbf-3633b061e263"
+    }
   }
 }
