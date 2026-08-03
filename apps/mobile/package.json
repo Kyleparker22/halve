@@ -10,7 +10,7 @@
     "android": "expo run:android",
     "prebuild": "expo prebuild",
     "typecheck": "tsc --noEmit",
-    "e2e": "maestro test .maestro"
+    "e2e": "xcrun simctl keychain booted reset || true && maestro test .maestro"
   },
   "dependencies": {
     "@halve/games": "workspace:*",

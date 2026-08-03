@@ -11,6 +11,18 @@ import {
 } from '../../src/hooks/useSession';
 import { radius, spacing, useTheme } from '../../src/theme';
 
+/**
+ * Email sign-in is a development affordance: Apple needs a paid account, Google
+ * needs OAuth credentials and phone OTP needs Twilio.
+ *
+ * It is also the only way an automated test can authenticate. A dev build shows
+ * the Expo launcher, which blocks Maestro; a release build has no test sign-in
+ * at all. So the E2E build is a release build with this one flag set, which
+ * keeps the tested binary as close to the shipped one as it can be while still
+ * being drivable. Unset in every real build, so it cannot ship on.
+ */
+const DEV_SIGN_IN = __DEV__ || process.env.EXPO_PUBLIC_E2E === '1';
+
 export default function SignIn() {
   const theme = useTheme();
   const router = useRouter();
@@ -104,7 +116,7 @@ export default function SignIn() {
         {verify.error ? <Small>{(verify.error as Error).message}</Small> : null}
       </Card>
 
-      {__DEV__ ? (
+      {DEV_SIGN_IN ? (
         <Card>
           <Body>Development sign-in</Body>
           <Small>

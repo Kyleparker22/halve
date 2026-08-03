@@ -12,7 +12,11 @@
 # staggered-reconnect test remains manual.
 appId: golf.halve.app
 ---
-- launchApp
+# clearState, or the run is not deterministic: a previous run leaves a session
+# behind, the app launches straight past sign-in, and the first assertion fails
+# on a healthy app. Signed-out is the only start state that is always true.
+- launchApp:
+    clearState: true
 
 - extendedWaitUntil:
     visible: '.*Bagdrop.*'
