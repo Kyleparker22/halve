@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -49,7 +50,13 @@ function RootNavigator() {
     }
   }, [loading, profile, profileLoading, router, segments, session]);
 
-  if (loading) return <Loading label="Getting your crew…" />;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.bg, justifyContent: 'center' }}>
+        <Loading label="Getting your crew…" />
+      </View>
+    );
+  }
 
   return (
     <>

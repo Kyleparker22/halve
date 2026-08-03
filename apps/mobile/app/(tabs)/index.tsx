@@ -6,10 +6,10 @@ import {
   EmptyState,
   ErrorNote,
   Heading,
-  Loading,
   Money,
   Row,
   Screen,
+  SkeletonList,
   Small,
   Title,
 } from '../../src/components/ui';
@@ -27,8 +27,14 @@ export default function CrewsScreen() {
   const seats = useOpenSeats();
   const rounds = useRounds(session?.user.id);
 
-  if (crews.isLoading) return <Loading label="Loading your crews…" />;
-  if (crews.error) return <ErrorNote error={crews.error} />;
+  if (crews.isLoading)
+    return (
+      <Screen>
+        <Title>Crews</Title>
+        <SkeletonList />
+      </Screen>
+    );
+  if (crews.error) return <ErrorNote error={crews.error} onRetry={() => void crews.refetch()} />;
 
   const balanceFor = (crewId: string) =>
     balances.data?.find((b) => b.crew_id === crewId)?.net_cents ?? 0;

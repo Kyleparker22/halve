@@ -5,6 +5,21 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ProfileRow } from '@halve/types';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from '../lib/query';
+import { captureError } from '../lib/analytics';
+
+/**
+ * Restoring the stored session is the first thing the app does, and it used to
+ * have no failure path at all: getSession() had no catch and no timeout, so a
+ * rejection — or a SecureStore read that simply never came back — left `loading`
+ * true forever. The app sat on "Getting your crew…" with no way out but
+ * deleting it. Found by running the release build on a simulator, which is the
+ * only place it shows up.
+ *
+ * Both holes are closed. A failure is treated as signed out, which is
+ * recoverable — the sign-in screen is one tap from working — where a permanent
+ * spinner is not.
+ */
+const SESSION_RESTORE_TIMEOUT_MS = 8000;
 
 export function useSession(): { session: Session | null; loading: boolean } {
   const [session, setSession] = useState<Session | null>(null);
@@ -12,17 +27,37 @@ export function useSession(): { session: Session | null; loading: boolean } {
 
   useEffect(() => {
     let active = true;
-    void supabase.auth.getSession().then(({ data }) => {
+    let settled = false;
+
+    const settle = (next: Session | null) => {
       if (!active) return;
-      setSession(data.session);
-      setLoading(false);
-    });
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, next) => {
+      settled = true;
       setSession(next);
       setLoading(false);
+    };
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => settle(data.session))
+      .catch((error: unknown) => {
+        captureError(error, { kind: 'session-restore' });
+        settle(null);
+      });
+
+    // Belt and braces: a promise that never settles is not caught by .catch.
+    const timer = setTimeout(() => {
+      if (settled || !active) return;
+      captureError(new Error('Session restore timed out'), { kind: 'session-restore-timeout' });
+      settle(null);
+    }, SESSION_RESTORE_TIMEOUT_MS);
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, next) => {
+      settle(next);
     });
+
     return () => {
       active = false;
+      clearTimeout(timer);
       subscription.subscription.unsubscribe();
     };
   }, []);

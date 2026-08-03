@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import {
+  Animated,
   ActivityIndicator,
   Pressable,
   ScrollView,
@@ -292,14 +293,76 @@ export function Loading({ label }: { label?: string }) {
   );
 }
 
-export function ErrorNote({ error }: { error: unknown }) {
+/**
+ * Offline is not "something went wrong" — it is the expected state of a phone
+ * on a course, and telling someone their round broke when they are simply in a
+ * dead spot is how you get a deleted app. Retry is offered when the caller can
+ * actually retry.
+ */
+export function ErrorNote({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const theme = useTheme();
   const message = error instanceof Error ? error.message : String(error);
+  const offline = /network request failed|fetch failed|offline|timeout/i.test(message);
+
   return (
-    <Card style={{ borderColor: theme.loss }}>
-      <Heading>Something went wrong</Heading>
-      <Body muted>{message}</Body>
+    <Card style={{ borderColor: offline ? theme.border : theme.loss }}>
+      <Heading>{offline ? 'No signal' : 'Something went wrong'}</Heading>
+      <Body muted>
+        {offline
+          ? 'This will load when you are back on. Anything you have scored is saved on this phone and will sync.'
+          : message}
+      </Body>
+      {onRetry ? <Button title="Try again" variant="secondary" onPress={onRetry} /> : null}
     </Card>
+  );
+}
+
+/**
+ * A shimmer block. Shown instead of a spinner on list screens, because a
+ * spinner says "wait" and a skeleton says "here is the shape of what is
+ * coming" — which on a cached-first app is usually true within a frame.
+ */
+export function Skeleton({ height = 16, width }: { height?: number; width?: number | string }) {
+  const theme = useTheme();
+  const pulse = useRef(new Animated.Value(0.4)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.9, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.4, duration: 700, useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+
+  return (
+    <Animated.View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{
+        height,
+        width: (width ?? '100%') as never,
+        borderRadius: radius.sm,
+        backgroundColor: theme.border,
+        opacity: pulse,
+      }}
+    />
+  );
+}
+
+/** The shape of a list of cards, for the screens that are lists of cards. */
+export function SkeletonList({ rows = 3 }: { rows?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }, (_, i) => (
+        <Card key={i}>
+          <Skeleton height={18} width="55%" />
+          <Skeleton height={12} width="35%" />
+        </Card>
+      ))}
+    </>
   );
 }
 
