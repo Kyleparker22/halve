@@ -1,9 +1,36 @@
 import Constants from 'expo-constants';
-import { QueryClient } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { queryStore } from './storage';
+import { captureError } from './analytics';
+
+/**
+ * Every failed query and mutation reports itself. Without this Sentry only ever
+ * hears about native crashes — and the failures that actually matter here are
+ * the quiet ones: a settle that 403s, a score that will not flush. Those render
+ * as an error note and are otherwise invisible to us.
+ *
+ * Offline is not an error. A phone in a bunker with no signal is the expected
+ * case for this app, and reporting it would bury the real failures in noise.
+ */
+const isOffline = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error);
+  return /network request failed|fetch failed|offline|timeout/i.test(message);
+};
 
 export const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      if (isOffline(error)) return;
+      captureError(error, { kind: 'query', queryKey: query.queryKey });
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _vars, _ctx, mutation) => {
+      if (isOffline(error)) return;
+      captureError(error, { kind: 'mutation', mutationKey: mutation.options.mutationKey });
+    },
+  }),
   defaultOptions: {
     queries: {
       // A round in progress must render from cache with no network at all.
@@ -59,6 +86,8 @@ export const queryKeys = {
   trips: ['trips'] as const,
   trip: (id: string) => ['trip', id] as const,
   tripExpenses: (id: string) => ['trip', id, 'expenses'] as const,
+  tripBalances: (id: string) => ['trip', id, 'balances'] as const,
+  tripLedger: (id: string) => ['trip', id, 'ledger'] as const,
   tripMembers: (id: string) => ['trip', id, 'members'] as const,
   openSeats: ['open-seats'] as const,
   courses: (term: string) => ['courses', term] as const,

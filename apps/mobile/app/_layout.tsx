@@ -6,7 +6,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { CACHE_BUSTER, persister, queryClient } from '../src/lib/query';
 import { startSyncEngine } from '../src/lib/sync';
-import { identify, initTelemetry } from '../src/lib/analytics';
+import { identify, initTelemetry, withTelemetry } from '../src/lib/analytics';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { registerDevice, useNotificationRouting } from '../src/lib/notifications';
 import { useProfile, useSession } from '../src/hooks/useSession';
 import { useTheme } from '../src/theme';
@@ -85,6 +86,8 @@ function RootNavigator() {
         <Stack.Screen name="trip/new" options={{ title: 'New trip' }} />
         <Stack.Screen name="trip/[id]/index" options={{ title: 'Trip' }} />
         <Stack.Screen name="trip/[id]/expenses" options={{ title: 'Expenses' }} />
+        <Stack.Screen name="trip/[id]/rooms" options={{ title: 'Rooms' }} />
+        <Stack.Screen name="trip/[id]/settle" options={{ title: 'Trip money' }} />
         <Stack.Screen name="chat/[scope]/[id]" options={{ title: 'Chat' }} />
         <Stack.Screen name="settings/notifications" options={{ title: 'Notifications' }} />
         <Stack.Screen name="seats" options={{ title: 'Open seats' }} />
@@ -94,17 +97,23 @@ function RootNavigator() {
   );
 }
 
-export default function RootLayout() {
+function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={{ persister, buster: CACHE_BUSTER }}
-        >
-          <RootNavigator />
-        </PersistQueryClientProvider>
+        <ErrorBoundary>
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={{ persister, buster: CACHE_BUSTER }}
+          >
+            <RootNavigator />
+          </PersistQueryClientProvider>
+        </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
+
+// Sentry.wrap adds the native error handler and navigation instrumentation.
+// It is a no-op when no DSN is configured, so this is safe before setup.
+export default withTelemetry(RootLayout);

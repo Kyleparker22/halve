@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { courseHandicap, playingHandicap } from '@halve/games';
 import { Body, Button, Card, Heading, Row, Screen, Small, Title } from '../../src/components/ui';
 import { useCourseSearch, useCreateRound } from '../../src/hooks/useRounds';
@@ -16,7 +16,14 @@ export default function NewRoundScreen() {
   const crews = useCrews(session?.user.id);
   const create = useCreateRound();
 
-  const [crewId, setCrewId] = useState<string | null>(null);
+  // Present when scheduling from a trip's itinerary; the round must carry it or
+  // it is created detached from the trip and its money misses the trip ledger.
+  const { trip: tripId, crew: crewParam } = useLocalSearchParams<{
+    trip?: string;
+    crew?: string;
+  }>();
+
+  const [crewId, setCrewId] = useState<string | null>(crewParam ?? null);
   const [term, setTerm] = useState('');
   const [courseId, setCourseId] = useState<string | null>(null);
   const [teeId, setTeeId] = useState<string | null>(null);
@@ -239,8 +246,14 @@ export default function NewRoundScreen() {
               profileIds: Array.from(new Set([session!.user.id, ...invited])),
               guestIds: guests,
               playingHandicaps,
+              tripId: tripId ?? null,
             },
-            { onSuccess: (round) => router.replace(`/round/${round.id}`) },
+            {
+              onSuccess: (round) =>
+                // Back to the trip when this round was scheduled from one, so
+                // the itinerary is visibly one round longer.
+                tripId ? router.replace(`/trip/${tripId}`) : router.replace(`/round/${round.id}`),
+            },
           )
         }
       />

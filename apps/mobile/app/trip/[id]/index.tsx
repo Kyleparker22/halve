@@ -13,13 +13,12 @@ import {
   Small,
   Title,
 } from '../../../src/components/ui';
-import { generatePairings, useAssignRoom, useTrip } from '../../../src/hooks/useTrips';
+import { generatePairings, useTrip } from '../../../src/hooks/useTrips';
 
 export default function TripScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const trip = useTrip(id);
-  const assign = useAssignRoom(id);
 
   if (trip.isLoading) return <Loading />;
   if (trip.error) return <ErrorNote error={trip.error} />;
@@ -27,6 +26,7 @@ export default function TripScreen() {
 
   const { trip: detail, members, rooms, rounds } = trip.data;
   const going = members.filter((m) => m.status === 'in');
+  const unassigned = going.filter((m) => !m.room_id);
   const pairings = generatePairings(
     going.map((m) => m.id),
     Math.max(1, rounds.length),
@@ -62,42 +62,45 @@ export default function TripScreen() {
       <Card>
         <Row justify="space-between">
           <Heading>Rooms</Heading>
-          <Small>cost splits to whoever is in them</Small>
+          <Button
+            title={rooms.length === 0 ? 'Add rooms' : 'Manage'}
+            variant="secondary"
+            onPress={() => router.push(`/trip/${id}/rooms`)}
+          />
         </Row>
-        {rooms.map((room) => {
-          const occupants = members.filter((m) => m.room_id === room.id);
-          return (
-            <Row key={room.id} justify="space-between">
-              <Body>
-                {room.name} · {occupants.length}/{room.capacity}
-              </Body>
-              <Small>${(room.cost_cents / 100).toFixed(0)}</Small>
-            </Row>
-          );
-        })}
-        {members
-          .filter((m) => m.status === 'in' && !m.room_id)
-          .map((member) => (
-            <Row key={member.id} justify="space-between">
-              <Small>{member.name} has no room</Small>
-              {rooms[0] ? (
-                <Button
-                  title={`Put in ${rooms[0].name}`}
-                  variant="secondary"
-                  onPress={() => assign.mutate({ memberId: member.id, roomId: rooms[0]!.id })}
-                />
-              ) : null}
-            </Row>
-          ))}
+        {rooms.length === 0 ? (
+          <Small>No rooms yet. Add them and the cost splits across whoever sleeps in them.</Small>
+        ) : (
+          rooms.map((room) => {
+            const occupants = members.filter((m) => m.room_id === room.id);
+            return (
+              <Row key={room.id} justify="space-between">
+                <Body>
+                  {room.name} · {occupants.length}/{room.capacity}
+                </Body>
+                <Small>${(room.cost_cents / 100).toFixed(0)}</Small>
+              </Row>
+            );
+          })
+        )}
+        {unassigned.length > 0 && rooms.length > 0 ? (
+          <Small>
+            {unassigned.length} {unassigned.length === 1 ? 'person has' : 'people have'} no bed yet.
+          </Small>
+        ) : null}
       </Card>
 
       <Card>
         <Row justify="space-between">
           <Heading>Itinerary</Heading>
+          {/* The trip id has to travel with this. Without it the round is
+              created detached and never appears here again. */}
           <Button
             title="Add a round"
             variant="secondary"
-            onPress={() => router.push('/round/new')}
+            onPress={() =>
+              router.push(`/round/new?trip=${id}&crew=${detail.crew_id}`)
+            }
           />
         </Row>
         {rounds.length === 0 ? <Small>No rounds scheduled yet.</Small> : null}
@@ -125,6 +128,7 @@ export default function TripScreen() {
       ) : null}
 
       <Button title="Expenses" onPress={() => router.push(`/trip/${id}/expenses`)} />
+      <Button title="Trip money" onPress={() => router.push(`/trip/${id}/settle`)} />
       <Button
         title="Trip chat"
         variant="secondary"

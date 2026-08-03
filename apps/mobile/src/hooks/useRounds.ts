@@ -179,6 +179,12 @@ export interface CreateRoundInput {
   /** Crew guests playing. */
   guestIds?: string[];
   /**
+   * Set when the round is part of a trip's itinerary. Without it the round is
+   * created detached, so it never appears on the trip and its money never lands
+   * in the trip ledger — it silently becomes an ordinary crew round.
+   */
+  tripId?: string | null;
+  /**
    * Playing handicap per profile, computed at scheduling time from the tee
    * actually being played (Technical Spec §5.1). Persisting this matters: the
    * games engine reads round_players.playing_handicap, so a null here means
@@ -204,7 +210,7 @@ export function useCreateRound() {
           max_players: input.maxPlayers,
           visibility: input.openSeats ? 'friends_of_friends' : 'crew',
           created_by: input.createdBy,
-          trip_id: null,
+          trip_id: input.tripId ?? null,
           name: null,
           booking_provider: null,
           booking_external_id: null,

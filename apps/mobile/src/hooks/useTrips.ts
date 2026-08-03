@@ -206,6 +206,124 @@ export function useAddExpense(tripId: string) {
   });
 }
 
+export function useCreateRoom(tripId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { name: string; capacity: number; costCents: number }) => {
+      const { data, error } = await supabase.rpc('create_room', {
+        p_trip_id: tripId,
+        p_name: input.name,
+        p_capacity: input.capacity,
+        p_cost_cents: input.costCents,
+      });
+      if (error) throw error;
+      return data as unknown as RoomRow;
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.trip(tripId) });
+      void client.invalidateQueries({ queryKey: queryKeys.tripExpenses(tripId) });
+    },
+  });
+}
+
+/** Who is coming, and when they land — the columns existed and nothing wrote them. */
+export function useUpdateTripMember(tripId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      memberId: string;
+      status?: 'invited' | 'in' | 'out' | 'maybe';
+      arrivesAt?: string | null;
+      departsAt?: string | null;
+    }) => {
+      const patch: {
+        status?: 'invited' | 'in' | 'out' | 'maybe';
+        arrives_at?: string | null;
+        departs_at?: string | null;
+      } = {};
+      if (input.status !== undefined) patch.status = input.status;
+      if (input.arrivesAt !== undefined) patch.arrives_at = input.arrivesAt;
+      if (input.departsAt !== undefined) patch.departs_at = input.departsAt;
+      if (Object.keys(patch).length === 0) return;
+
+      const { error } = await supabase.from('trip_members').update(patch).eq('id', input.memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.trip(tripId) }),
+  });
+}
+
+/**
+ * Pushes logged expenses into the ledger. Idempotent server-side, so calling it
+ * on every expense add and again before settling is correct rather than merely
+ * safe — the trip's money is live as it accrues instead of appearing at the end.
+ */
+export function usePostTripExpenses(tripId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('post-trip-expenses', {
+        body: { trip_id: tripId },
+      });
+      if (error) throw error;
+      return data as { written: number; skipped: number; unsettleable: string[] };
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.tripBalances(tripId) });
+      void client.invalidateQueries({ queryKey: queryKeys.trip(tripId) });
+    },
+  });
+}
+
+export interface TripBalance {
+  profileId: string;
+  name: string;
+  netCents: number;
+}
+
+/** Net open position per person for this trip, richest first. */
+export function useTripBalances(tripId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.tripBalances(tripId ?? 'none'),
+    enabled: Boolean(tripId),
+    queryFn: async (): Promise<TripBalance[]> => {
+      const { data, error } = await supabase
+        .from('trip_balances')
+        .select('profile_id, net_cents, profiles(display_name)')
+        .eq('trip_id', tripId!);
+      if (error) throw error;
+      return (
+        (data ?? []) as unknown as Array<{
+          profile_id: string;
+          net_cents: number;
+          profiles: { display_name: string } | null;
+        }>
+      )
+        .map((row) => ({
+          profileId: row.profile_id,
+          name: row.profiles?.display_name ?? 'Someone',
+          netCents: Number(row.net_cents),
+        }))
+        .sort((a, b) => b.netCents - a.netCents || a.name.localeCompare(b.name));
+    },
+  });
+}
+
+/** Marks the trip done. Refuses while any of its ledger entries are still open. */
+export function useCompleteTrip(tripId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc('complete_trip', { p_trip_id: tripId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.trip(tripId) });
+      void client.invalidateQueries({ queryKey: queryKeys.trips });
+    },
+  });
+}
+
 export function useJoinTrip() {
   const client = useQueryClient();
   return useMutation({

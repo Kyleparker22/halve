@@ -92,6 +92,7 @@ describe('a non-member gets zero rows', () => {
     ['settlements', `select id from settlements`],
     ['settlement_batches', `select id from settlement_batches`],
     ['crew_balances (view)', `select * from crew_balances`],
+    ['trip_balances (view)', `select * from trip_balances`],
     ['trips', `select id from trips`],
     ['trip_expenses', `select id from trip_expenses`],
     ['trip_expense_shares', `select * from trip_expense_shares`],

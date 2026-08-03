@@ -39,6 +39,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      course_search_log: {
+        Row: {
+          hits: number
+          searched_at: string
+          term: string
+        }
+        Insert: {
+          hits?: number
+          searched_at?: string
+          term: string
+        }
+        Update: {
+          hits?: number
+          searched_at?: string
+          term?: string
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           city: string | null
@@ -1533,6 +1551,14 @@ export type Database = {
         }
         Relationships: []
       }
+      trip_balances: {
+        Row: {
+          net_cents: number | null
+          profile_id: string | null
+          trip_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       approve_seat_request: {
@@ -1544,6 +1570,28 @@ export type Database = {
       cancel_settlement_batch: {
         Args: { p_batch_id: string }
         Returns: undefined
+      }
+      complete_trip: {
+        Args: { p_trip_id: string }
+        Returns: {
+          cover_url: string | null
+          created_at: string | null
+          created_by: string | null
+          crew_id: string
+          destination: string | null
+          end_date: string
+          id: string
+          invite_code: string
+          name: string
+          start_date: string
+          status: Database["public"]["Enums"]["trip_status"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "trips"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       confirm_settlement: {
         Args: {
@@ -1568,6 +1616,29 @@ export type Database = {
         }
         Returns: string
       }
+      create_room: {
+        Args: {
+          p_capacity: number
+          p_cost_cents?: number
+          p_name: string
+          p_paid_by?: string
+          p_trip_id: string
+        }
+        Returns: {
+          capacity: number
+          cost_cents: number
+          id: string
+          name: string
+          paid_by: string | null
+          trip_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "rooms"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       crew_preview: {
         Args: { p_code: string }
         Returns: {
@@ -1577,6 +1648,7 @@ export type Database = {
         }[]
       }
       delete_account: { Args: { p_profile_id?: string }; Returns: undefined }
+      dispatch_push: { Args: never; Returns: undefined }
       enqueue_notification: {
         Args: {
           p_body: string
@@ -1607,6 +1679,7 @@ export type Database = {
       }
       queue_round_reminders: { Args: never; Returns: undefined }
       request_open_seat: { Args: { p_round_id: string }; Returns: string }
+      set_push_dispatch_secret: { Args: { p_secret: string }; Returns: string }
       split_expense_evenly: {
         Args: { p_expense_id: string; p_member_ids: string[] }
         Returns: undefined

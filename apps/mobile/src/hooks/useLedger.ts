@@ -53,6 +53,46 @@ export function useCrewLedger(crewId: string | undefined) {
   });
 }
 
+/**
+ * The same view, narrowed to one trip. A buddies trip settles on its own — the
+ * point of a trip ledger is that four days of green fees, dinners and rooms
+ * collapse into one set of payments at the end, without dragging in every
+ * Saturday game the crew has played since March.
+ */
+export function useTripLedger(tripId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.tripLedger(tripId ?? 'none'),
+    enabled: Boolean(tripId),
+    queryFn: async (): Promise<LedgerView> => {
+      const { data, error } = await supabase
+        .from('ledger_entries')
+        .select(
+          '*, from:profiles!ledger_entries_from_profile_fkey(*), to:profiles!ledger_entries_to_profile_fkey(*)',
+        )
+        .eq('trip_id', tripId!)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+
+      const entries = (data ?? []) as unknown as LedgerView['entries'];
+      const open: LedgerEntryDraft[] = entries
+        .filter((entry) => entry.status === 'open')
+        .map((entry) => ({
+          fromProfile: entry.from_profile,
+          toProfile: entry.to_profile,
+          amountCents: entry.amount_cents,
+        }));
+
+      return {
+        entries,
+        open,
+        positions: netPositions(open),
+        matrix: owesMatrix(open),
+        payments: simplifyDebts(open),
+      };
+    },
+  });
+}
+
 export function useAddManualEntry(crewId: string) {
   const client = useQueryClient();
   return useMutation({

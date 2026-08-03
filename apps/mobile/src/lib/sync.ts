@@ -11,6 +11,7 @@ import type {
   UpsertScoreRpcArgs,
 } from '@halve/types';
 import { supabase } from './supabase';
+import { captureError } from './analytics';
 import {
   dequeue,
   markAttempt,
@@ -79,6 +80,18 @@ async function flushItem(item: OutboxItem): Promise<'done' | 'retry'> {
     // succeed. Drop it rather than retrying forever.
     const permanent = error.code === '42501' || error.code === '23503';
     markAttempt(item.id);
+    if (permanent) {
+      // Dropping a score is the most damaging thing this app can do quietly:
+      // the golfer sees their number on the card, it never reaches the server,
+      // and the first anyone knows is an argument about the total. If it has to
+      // be discarded, it does not get discarded silently.
+      captureError(error, {
+        kind: 'score-dropped',
+        code: error.code,
+        roundPlayerId: item.payload.roundPlayerId,
+        hole: item.payload.hole,
+      });
+    }
     return permanent ? 'done' : 'retry';
   }
 
