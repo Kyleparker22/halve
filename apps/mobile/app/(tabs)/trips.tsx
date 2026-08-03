@@ -33,6 +33,7 @@ export default function TripsScreen() {
         <EmptyState
           title="No trips yet"
           hint="Rooms, pairings, expenses and one settlement at the end."
+          actions={[{ label: 'Plan a trip', onPress: () => router.push('/trip/new') }]}
         />
       ) : null}
 

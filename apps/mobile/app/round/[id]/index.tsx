@@ -145,16 +145,28 @@ export default function RoundScreen() {
         )}
       </Card>
 
+      {/* The booth is the thing no other golf app has — it gets a card that
+          says what it is, not a bare button below the utilities. */}
+      <Card>
+        <Heading>The broadcast booth</Heading>
+        <Small>
+          Hal and Marcy call your round. Send clips from the course and they commentate — off the
+          real scores and whatever dirt the crew gave them.
+        </Small>
+        <Row gap={8}>
+          <Button title="Open the booth" onPress={() => router.push(`/round/${id}/booth`)} />
+          {round.status === 'scheduled' ? (
+            <Button
+              title="Give them dirt"
+              variant="secondary"
+              onPress={() => router.push(`/round/${id}/storylines`)}
+            />
+          ) : null}
+        </Row>
+      </Card>
+
       <Divider />
 
-      <Button title="The booth" onPress={() => router.push(`/round/${id}/booth`)} />
-      {round.status === 'scheduled' ? (
-        <Button
-          title="Give the booth some dirt"
-          variant="secondary"
-          onPress={() => router.push(`/round/${id}/storylines`)}
-        />
-      ) : null}
       <Button
         title="Round chat"
         variant="secondary"

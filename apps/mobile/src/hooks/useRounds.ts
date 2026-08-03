@@ -21,6 +21,10 @@ export interface RoundListItem extends RoundRow {
   crewName: string | null;
   inCount: number;
   myRsvp: RsvpStatus | null;
+  /** Your gross on a completed round, null while unplayed. */
+  myGross: number | null;
+  /** Your net money across the round's games, null when there were none. */
+  myMoneyCents: number | null;
 }
 
 export function useRounds(profileId: string | undefined) {
@@ -30,7 +34,9 @@ export function useRounds(profileId: string | undefined) {
     queryFn: async (): Promise<RoundListItem[]> => {
       const { data, error } = await supabase
         .from('rounds')
-        .select('*, courses!inner(name, club_name), crews(name), round_players(profile_id, rsvp)')
+        .select(
+          '*, courses!inner(name, club_name), crews(name), round_players(id, profile_id, rsvp, scores(strokes), game_results(amount_cents))',
+        )
         .order('scheduled_at', { ascending: true });
       if (error) throw error;
 
@@ -38,15 +44,28 @@ export function useRounds(profileId: string | undefined) {
         RoundRow & {
           courses: { name: string; club_name: string | null };
           crews: { name: string } | null;
-          round_players: Array<{ profile_id: string | null; rsvp: RsvpStatus }>;
+          round_players: Array<{
+            id: string;
+            profile_id: string | null;
+            rsvp: RsvpStatus;
+            scores: Array<{ strokes: number | null }>;
+            game_results: Array<{ amount_cents: number }>;
+          }>;
         }
-      >).map((row) => ({
-        ...row,
-        courseName: courseLabel(row.courses),
-        crewName: row.crews?.name ?? null,
-        inCount: row.round_players.filter((p) => p.rsvp === 'in').length,
-        myRsvp: row.round_players.find((p) => p.profile_id === profileId)?.rsvp ?? null,
-      }));
+      >).map((row) => {
+        const mine = row.round_players.find((p) => p.profile_id === profileId);
+        const scored = (mine?.scores ?? []).filter((s) => s.strokes !== null);
+        const money = (mine?.game_results ?? []).reduce((sum, r) => sum + r.amount_cents, 0);
+        return {
+          ...row,
+          courseName: courseLabel(row.courses),
+          crewName: row.crews?.name ?? null,
+          inCount: row.round_players.filter((p) => p.rsvp === 'in').length,
+          myRsvp: mine?.rsvp ?? null,
+          myGross: scored.length > 0 ? scored.reduce((sum, s) => sum + (s.strokes ?? 0), 0) : null,
+          myMoneyCents: (mine?.game_results ?? []).length > 0 ? money : null,
+        };
+      });
     },
   });
 }

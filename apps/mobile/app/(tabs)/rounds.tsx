@@ -7,6 +7,7 @@ import {
   ErrorNote,
   Heading,
   Loading,
+  Money,
   Pill,
   Row,
   Screen,
@@ -47,7 +48,11 @@ export default function RoundsScreen() {
       </Row>
 
       {upcoming.length === 0 ? (
-        <EmptyState title="Nothing on the book" hint="Schedule a round and the crew gets a push." />
+        <EmptyState
+          title="Nothing on the book"
+          hint="Schedule a round and the crew gets a push. Scoring works with no signal."
+          actions={[{ label: 'Schedule a round', onPress: () => router.push('/round/new') }]}
+        />
       ) : null}
 
       {upcoming.map((round) => (
@@ -74,8 +79,14 @@ export default function RoundsScreen() {
         <Card key={round.id} onPress={() => router.push(`/round/${round.id}/recap`)}>
           <Row justify="space-between">
             <Body>{round.courseName}</Body>
-            <Small>{when(round.scheduled_at, round.timezone)}</Small>
+            {/* The result is the story. A played round showing only its date
+                reads as an app with nothing in it. */}
+            <Row gap={8}>
+              {round.myGross !== null ? <Body>{round.myGross}</Body> : null}
+              {round.myMoneyCents !== null ? <Money cents={round.myMoneyCents} size={15} /> : null}
+            </Row>
           </Row>
+          <Small>{when(round.scheduled_at, round.timezone)}</Small>
         </Card>
       ))}
     </Screen>
