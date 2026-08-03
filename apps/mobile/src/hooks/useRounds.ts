@@ -14,6 +14,7 @@ import type {
 } from '@halve/types';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from '../lib/query';
+import { courseLabel, courseSearchFilter } from '../lib/course';
 
 export interface RoundListItem extends RoundRow {
   courseName: string;
@@ -29,19 +30,19 @@ export function useRounds(profileId: string | undefined) {
     queryFn: async (): Promise<RoundListItem[]> => {
       const { data, error } = await supabase
         .from('rounds')
-        .select('*, courses!inner(name), crews(name), round_players(profile_id, rsvp)')
+        .select('*, courses!inner(name, club_name), crews(name), round_players(profile_id, rsvp)')
         .order('scheduled_at', { ascending: true });
       if (error) throw error;
 
       return ((data ?? []) as unknown as Array<
         RoundRow & {
-          courses: { name: string };
+          courses: { name: string; club_name: string | null };
           crews: { name: string } | null;
           round_players: Array<{ profile_id: string | null; rsvp: RsvpStatus }>;
         }
       >).map((row) => ({
         ...row,
-        courseName: row.courses.name,
+        courseName: courseLabel(row.courses),
         crewName: row.crews?.name ?? null,
         inCount: row.round_players.filter((p) => p.rsvp === 'in').length,
         myRsvp: row.round_players.find((p) => p.profile_id === profileId)?.rsvp ?? null,
@@ -116,7 +117,7 @@ export function useRoundBundle(roundId: string | undefined) {
 
       return {
         round: row,
-        courseName: row.courses.name,
+        courseName: courseLabel(row.courses),
         teeName: row.tees?.name ?? null,
         holes: played.map((h) => ({
           number: h.number,
@@ -280,7 +281,7 @@ export function useCourseSearch(term: string) {
       const { data, error } = await supabase
         .from('courses')
         .select('*, tees(*)')
-        .ilike('name', `%${term.trim()}%`)
+        .or(courseSearchFilter(term.trim()))
         .limit(20);
       if (error) throw error;
       return (data ?? []) as unknown as Array<CourseRow & { tees: TeeRow[] }>;

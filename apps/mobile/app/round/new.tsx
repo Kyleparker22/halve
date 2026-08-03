@@ -6,6 +6,7 @@ import { Body, Button, Card, Heading, Row, Screen, Small, Title } from '../../sr
 import { useCourseSearch, useCreateRound } from '../../src/hooks/useRounds';
 import { useCrewGuests, useCrewMembers, useCrews } from '../../src/hooks/useCrews';
 import { useSession } from '../../src/hooks/useSession';
+import { courseLabel } from '../../src/lib/course';
 import { radius, spacing, useTheme } from '../../src/theme';
 
 export default function NewRoundScreen() {
@@ -111,8 +112,11 @@ export default function NewRoundScreen() {
             }}
           >
             <Row justify="space-between">
-              <Body style={{ color: courseId === result.id ? theme.accent : theme.text }}>
-                {result.name}
+              <Body
+                numberOfLines={2}
+                style={{ flex: 1, color: courseId === result.id ? theme.accent : theme.text }}
+              >
+                {courseLabel(result)}
               </Body>
               <Small>
                 {result.city}

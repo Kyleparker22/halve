@@ -152,10 +152,14 @@ Deno.serve(async (request: Request) => {
 
   const admin = createClient(url, serviceKey);
 
+  // Multi-course clubs name their courses "East", "North", "Black" — the part
+  // a person searches for is in club_name. Matching only name finds nothing.
+  const matches = `name.ilike.%${term}%,club_name.ilike.%${term}%`;
+
   const local = await admin
     .from('courses')
-    .select('id, name, city, state, needs_review')
-    .ilike('name', `%${term}%`)
+    .select('id, name, club_name, city, state, needs_review')
+    .or(matches)
     .limit(20);
 
   if (!providerKey) {
@@ -260,8 +264,8 @@ Deno.serve(async (request: Request) => {
 
   const merged = await admin
     .from('courses')
-    .select('id, name, city, state, needs_review')
-    .ilike('name', `%${term}%`)
+    .select('id, name, club_name, city, state, needs_review')
+    .or(matches)
     .limit(20);
 
   return json({ courses: merged.data ?? [], source: 'provider' });
