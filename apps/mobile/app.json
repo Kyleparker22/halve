@@ -11,7 +11,6 @@
       "supportsTablet": false,
       "bundleIdentifier": "golf.halve.app",
       "associatedDomains": [
-        "applinks:halve.golf",
         "applinks:halve.golf"
       ],
       "infoPlist": {
@@ -26,24 +25,10 @@
     "android": {
       "package": "golf.halve.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0B3D2E"
+        "backgroundColor": "#0B3D2E",
+        "foregroundImage": "./assets/adaptive-icon.png"
       },
       "intentFilters": [
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "https",
-              "host": "halve.golf",
-              "pathPrefix": "/join"
-            }
-          ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
-        },
         {
           "action": "VIEW",
           "autoVerify": true,
@@ -61,12 +46,6 @@
         }
       ],
       "queries": [
-        {
-          "scheme": "venmo"
-        },
-        {
-          "scheme": "cashapp"
-        },
         {
           "scheme": "venmo"
         },
@@ -99,7 +78,19 @@
         }
       ],
       "expo-status-bar",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B3D2E",
+          "dark": {
+            "backgroundColor": "#0D110C"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -116,6 +107,10 @@
     },
     "updates": {
       "url": "https://u.expo.dev/539b8861-9a0f-4c33-8bbf-3633b061e263"
+    },
+    "icon": "./assets/icon.png",
+    "web": {
+      "favicon": "./assets/favicon.png"
     }
   }
 }
