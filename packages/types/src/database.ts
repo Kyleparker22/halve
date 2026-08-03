@@ -1556,6 +1556,18 @@ export type Database = {
         Args: { p_invite_code: string; p_name: string }
         Returns: string
       }
+      create_manual_course: {
+        Args: {
+          p_city?: string
+          p_holes: Json
+          p_name: string
+          p_rating?: number
+          p_slope?: number
+          p_state?: string
+          p_tee_name?: string
+        }
+        Returns: string
+      }
       crew_preview: {
         Args: { p_code: string }
         Returns: {
@@ -1600,6 +1612,10 @@ export type Database = {
         Returns: undefined
       }
       sync_room_expense: { Args: { p_room_id: string }; Returns: undefined }
+      update_hole_card: {
+        Args: { p_holes: Json; p_tee_id: string }
+        Returns: undefined
+      }
       upsert_score: {
         Args: {
           p_base_version: number

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { GameConfig } from '@halve/games';
 import type {
   CourseRow,
+  Json,
   GameRow,
   HoleRow,
   RoundBundle,
@@ -258,11 +259,24 @@ export function useStartRound(roundId: string) {
   });
 }
 
+/**
+ * Course search goes through the course-search edge function, which answers
+ * from our own cache and only reaches for the provider when the cache comes up
+ * short — the provider key is server-side only, and a round in progress must
+ * never touch a third party. If the function is unavailable, fall back to
+ * querying the local table so search still works on cached courses.
+ */
 export function useCourseSearch(term: string) {
   return useQuery({
     queryKey: queryKeys.courses(term),
     enabled: term.trim().length >= 2,
     queryFn: async (): Promise<Array<CourseRow & { tees: TeeRow[] }>> => {
+      try {
+        await supabase.functions.invoke('course-search', { body: { query: term.trim() } });
+      } catch {
+        // Cache-only search is a degraded result, not a failure.
+      }
+
       const { data, error } = await supabase
         .from('courses')
         .select('*, tees(*)')
@@ -270,6 +284,74 @@ export function useCourseSearch(term: string) {
         .limit(20);
       if (error) throw error;
       return (data ?? []) as unknown as Array<CourseRow & { tees: TeeRow[] }>;
+    },
+  });
+}
+
+export interface HoleDraft {
+  number: number;
+  par: number;
+  stroke_index: number;
+  yardage?: number | null;
+}
+
+/** Adding the muni no provider has. Goes through a security-definer function. */
+export function useCreateManualCourse() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      name: string;
+      city: string;
+      state: string;
+      teeName: string;
+      rating: number | null;
+      slope: number | null;
+      holes: HoleDraft[];
+    }) => {
+      const { data, error } = await supabase.rpc('create_manual_course', {
+        p_name: input.name,
+        p_holes: input.holes as unknown as Json,
+        p_tee_name: input.teeName,
+        ...(input.city ? { p_city: input.city } : {}),
+        ...(input.state ? { p_state: input.state } : {}),
+        ...(input.rating !== null ? { p_rating: input.rating } : {}),
+        ...(input.slope !== null ? { p_slope: input.slope } : {}),
+      });
+      if (error) throw error;
+      return data as string;
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: ['courses'] }),
+  });
+}
+
+/** The needs_review path: a human with the card fixes what the provider missed. */
+export function useUpdateHoleCard() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ teeId, holes }: { teeId: string; holes: HoleDraft[] }) => {
+      const { error } = await supabase.rpc('update_hole_card', {
+        p_tee_id: teeId,
+        p_holes: holes as unknown as Json,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: ['courses'] }),
+  });
+}
+
+export function useTeeCard(teeId: string | undefined) {
+  return useQuery({
+    queryKey: ['tee', teeId],
+    enabled: Boolean(teeId),
+    queryFn: async () => {
+      const [{ data: tee }, { data: holes }] = await Promise.all([
+        supabase.from('tees').select('*, courses(name, needs_review)').eq('id', teeId!).single(),
+        supabase.from('holes').select('*').eq('tee_id', teeId!).order('number'),
+      ]);
+      return {
+        tee: tee as unknown as TeeRow & { courses: { name: string; needs_review: boolean } },
+        holes: (holes ?? []) as HoleRow[],
+      };
     },
   });
 }

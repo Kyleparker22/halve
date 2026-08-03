@@ -132,11 +132,28 @@ export default function NewRoundScreen() {
             ))}
           </Row>
         ) : null}
-        {course?.needs_review ? (
-          <Small>
-            This course is missing stroke indexes from the provider. Net games need them — you can
-            correct them on the card.
-          </Small>
+        {course?.needs_review && teeId ? (
+          <>
+            <Small>
+              This course came back without stroke indexes, so they were guessed from yardage. Net
+              games allocate strokes by index — fix them against the real card first.
+            </Small>
+            <Button
+              title="Fix the card"
+              variant="secondary"
+              onPress={() => router.push(`/course/${teeId}/card`)}
+            />
+          </>
+        ) : null}
+        {term.trim().length >= 2 && (courses.data ?? []).length === 0 && !courses.isFetching ? (
+          <>
+            <Small>Nothing found. Municipal courses often are not in any provider.</Small>
+            <Button
+              title="Add it by hand"
+              variant="secondary"
+              onPress={() => router.push('/course/new')}
+            />
+          </>
         ) : null}
       </Card>
 
