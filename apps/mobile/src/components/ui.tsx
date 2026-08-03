@@ -229,11 +229,38 @@ export function Pill({ label, tone = 'muted' }: { label: string; tone?: 'muted' 
   );
 }
 
-export function EmptyState({ title, hint }: { title: string; hint?: string }) {
+export interface EmptyAction {
+  label: string;
+  onPress: () => void;
+  variant?: 'primary' | 'secondary';
+}
+
+/**
+ * An empty state with nothing to tap is a dead end, and a dead end on the first
+ * screen after sign-up is where new users leave. Every empty state should say
+ * what to do and give the user the button to do it.
+ */
+export function EmptyState({
+  title,
+  hint,
+  actions,
+}: {
+  title: string;
+  hint?: string;
+  actions?: EmptyAction[];
+}) {
   return (
     <Card>
       <Heading>{title}</Heading>
       {hint ? <Body muted>{hint}</Body> : null}
+      {(actions ?? []).map((action) => (
+        <Button
+          key={action.label}
+          title={action.label}
+          variant={action.variant ?? 'primary'}
+          onPress={action.onPress}
+        />
+      ))}
     </Card>
   );
 }

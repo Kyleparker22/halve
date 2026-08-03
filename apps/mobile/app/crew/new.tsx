@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Card, Heading, Screen, Small, Title } from '../../src/components/ui';
 import { useCreateCrew, useJoinCrew } from '../../src/hooks/useCrews';
 import { useSession } from '../../src/hooks/useSession';
@@ -14,6 +14,10 @@ export default function NewCrewScreen() {
   const join = useJoinCrew();
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  // Someone arriving with a code in hand should land on the code field, not on
+  // a form asking them to name a crew that already exists.
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const joining = mode === 'join';
 
   const input = {
     borderWidth: 1,
@@ -54,10 +58,11 @@ export default function NewCrewScreen() {
       </Card>
 
       <Card>
-        <Heading>Or join with a code</Heading>
+        <Heading>{joining ? 'Join with a code' : 'Or join with a code'}</Heading>
         <TextInput
           style={input}
           testID="join-code"
+          autoFocus={joining}
           value={code}
           onChangeText={setCode}
           autoCapitalize="none"

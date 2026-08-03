@@ -16,6 +16,7 @@ import {
 import { useCrews } from '../../src/hooks/useCrews';
 import { useSession } from '../../src/hooks/useSession';
 import { useOpenSeats } from '../../src/hooks/useSocial';
+import { useRounds } from '../../src/hooks/useRounds';
 import { useCrewBalancesForMe } from '../../src/hooks/useBalances';
 
 export default function CrewsScreen() {
@@ -24,6 +25,7 @@ export default function CrewsScreen() {
   const crews = useCrews(session?.user.id);
   const balances = useCrewBalancesForMe(session?.user.id);
   const seats = useOpenSeats();
+  const rounds = useRounds(session?.user.id);
 
   if (crews.isLoading) return <Loading label="Loading your crews…" />;
   if (crews.error) return <ErrorNote error={crews.error} />;
@@ -38,10 +40,32 @@ export default function CrewsScreen() {
         <Button title="New crew" variant="secondary" onPress={() => router.push('/crew/new')} />
       </Row>
 
+      {/* The first screen after sign-up. A dead end here is where new users
+          leave, so it says what to do and hands over the button — including
+          the invite-code path, which was previously reachable only by tapping
+          "New crew", which is the last thing someone with a code would tap. */}
       {(crews.data ?? []).length === 0 ? (
         <EmptyState
-          title="No crews yet"
-          hint="A crew is the group you actually play with. Make one and send the link."
+          title="Start with your regular four"
+          hint="A crew is the group you actually play with. Everything — scores, side games, who owes who — hangs off it. You can play a round on your own too; add the others whenever."
+          actions={[
+            { label: 'Start a crew', onPress: () => router.push('/crew/new') },
+            {
+              label: 'I have an invite code',
+              variant: 'secondary',
+              onPress: () => router.push('/crew/new?mode=join'),
+            },
+          ]}
+        />
+      ) : null}
+
+      {/* Has a crew, has never played. The next step is a round, not another
+          crew, and nothing on this screen said so. */}
+      {(crews.data ?? []).length > 0 && (rounds.data ?? []).length === 0 ? (
+        <EmptyState
+          title="Now put a round on the books"
+          hint="Pick a course and a time. Scoring works with no signal, so the course being a dead zone does not matter."
+          actions={[{ label: 'Schedule a round', onPress: () => router.push('/round/new') }]}
         />
       ) : null}
 
