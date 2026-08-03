@@ -19,7 +19,8 @@
           "venmo",
           "cashapp"
         ]
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "golf.halve.app",
@@ -54,6 +55,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-apple-authentication",
       "expo-secure-store",
       [
         "expo-notifications",
@@ -76,8 +78,10 @@
     },
     "extra": {
       "eas": {
-        "projectId": "00000000-0000-0000-0000-000000000000"
-      }
-    }
+        "projectId": "539b8861-9a0f-4c33-8bbf-3633b061e263"
+      },
+      "router": {}
+    },
+    "owner": "kyleparker22"
   }
 }

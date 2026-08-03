@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import type { Session } from '@supabase/supabase-js';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ProfileRow } from '@halve/types';
@@ -63,9 +64,56 @@ export function useVerifyOtp() {
   });
 }
 
+/**
+ * Native Sign in with Apple. The OAuth web redirect works, but on a native iOS
+ * app it is the wrong shape: it bounces through a browser, needs a Services ID
+ * and a redirect URL, and is not what App Review expects to see. The native
+ * flow uses the app's own bundle identifier and hands Supabase an identity
+ * token to verify directly.
+ */
+export function useSignInWithApple() {
+  return useMutation({
+    mutationFn: async () => {
+      const available = await AppleAuthentication.isAvailableAsync();
+      if (!available) throw new Error('Sign in with Apple is not available on this device.');
+
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) throw new Error('Apple did not return an identity token.');
+
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+      });
+      if (error) throw error;
+
+      // Apple sends the real name exactly once, on first authorisation, and
+      // never again. Capture it now or the profile is stuck with a generated
+      // handle forever.
+      const fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      if (fullName && data.user) {
+        await supabase
+          .from('profiles')
+          .update({ display_name: fullName })
+          .eq('id', data.user.id)
+          .is('display_name', null);
+      }
+
+      return data;
+    },
+  });
+}
+
 export function useSignInWithProvider() {
   return useMutation({
-    mutationFn: async (provider: 'apple' | 'google') => {
+    mutationFn: async (provider: 'google') => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: { redirectTo: 'halve://auth-callback', skipBrowserRedirect: false },

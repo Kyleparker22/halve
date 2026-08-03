@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Body, Button, Card, Screen, Small, Title } from '../../src/components/ui';
 import {
   useDevEmailSignIn,
+  useSignInWithApple,
   useSignInWithOtp,
   useSignInWithProvider,
   useVerifyOtp,
@@ -23,6 +24,7 @@ export default function SignIn() {
   const otp = useSignInWithOtp();
   const verify = useVerifyOtp();
   const devSignIn = useDevEmailSignIn();
+  const apple = useSignInWithApple();
 
   const input = {
     borderWidth: 1,
@@ -44,7 +46,12 @@ export default function SignIn() {
 
       <Card>
         {/* Apple first: required by the App Store once another provider exists. */}
-        <Button title="Continue with Apple" onPress={() => provider.mutate('apple')} />
+        <Button
+          title="Continue with Apple"
+          loading={apple.isPending}
+          onPress={() => apple.mutate()}
+        />
+        {apple.error ? <Small>{(apple.error as Error).message}</Small> : null}
         <Button
           title="Continue with Google"
           variant="secondary"
