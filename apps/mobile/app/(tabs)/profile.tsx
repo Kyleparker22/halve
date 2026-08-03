@@ -1,5 +1,5 @@
 import { Alert, Linking } from 'react-native';
-import Constants from 'expo-constants';
+import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
 import {
   Body,
@@ -105,10 +105,17 @@ export default function ProfileScreen() {
         Bagdrop is a scorekeeping and expense-splitting tool for friends. It never holds or transfers
         money.
       </Small>
-      {/* Support asks "what build are you on?" before anything else. */}
+      {/*
+        Support asks "what build are you on?" before anything else — so this has
+        to read the *installed binary*, not the app config. With
+        appVersionSource: "remote" the build number is assigned by EAS at build
+        time and never appears in expoConfig, so reading it from there showed a
+        dash on every real build. Application reads Info.plist at runtime, which
+        is the only place the shipped number actually exists.
+      */}
       <Small>
-        Version {Constants.expoConfig?.version ?? '—'} (
-        {(Constants.expoConfig?.ios as { buildNumber?: string } | undefined)?.buildNumber ?? '—'})
+        Version {Application.nativeApplicationVersion ?? '—'} (
+        {Application.nativeBuildVersion ?? '—'})
       </Small>
     </Screen>
   );
