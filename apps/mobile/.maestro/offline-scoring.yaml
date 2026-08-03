@@ -19,7 +19,7 @@ appId: golf.halve.app
     clearState: true
 
 - extendedWaitUntil:
-    visible: '.*Bagdrop.*'
+    visible: '.*Kaddee.*'
     timeout: 120000
 
 - runFlow:

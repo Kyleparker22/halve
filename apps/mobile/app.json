@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Bagdrop",
+    "name": "Kaddee",
     "slug": "halve",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -61,9 +61,9 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Bagdrop attaches photos to trip expenses and to clips you send the broadcast booth.",
-          "cameraPermission": "Bagdrop uses the camera so you can film a shot and send it to the broadcast booth.",
-          "microphonePermission": "Bagdrop records audio with your video clips so the booth has the reaction too."
+          "photosPermission": "Kaddee attaches photos to trip expenses and to clips you send the broadcast booth.",
+          "cameraPermission": "Kaddee uses the camera so you can film a shot and send it to the broadcast booth.",
+          "microphonePermission": "Kaddee records audio with your video clips so the booth has the reaction too."
         }
       ],
       [
@@ -96,7 +96,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Bagdrop shows how far you are from the green while you are playing. It only uses your location while the scorecard is open.",
+          "locationWhenInUsePermission": "Kaddee shows how far you are from the green while you are playing. It only uses your location while the scorecard is open.",
           "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": false
         }

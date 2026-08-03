@@ -108,7 +108,7 @@ export default function CrewScreen() {
         variant="secondary"
         onPress={() =>
           void Share.share({
-            message: `Join ${crew.data!.name} on Bagdrop: https://halve.golf/join/${crew.data!.invite_code}`,
+            message: `Join ${crew.data!.name} on Kaddee: https://halve.golf/join/${crew.data!.invite_code}`,
           })
         }
       />

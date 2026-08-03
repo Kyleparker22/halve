@@ -128,7 +128,7 @@ export default function TripSettleScreen() {
               </Row>
             ))}
             <Small>
-              Bagdrop never touches the money — these open your own payment app with the amount filled
+              Kaddee never touches the money — these open your own payment app with the amount filled
               in.
             </Small>
             <Button

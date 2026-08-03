@@ -53,7 +53,7 @@ export function Yardage({ courseId, holeNumber }: Props) {
         <Small>
           {mapped
             ? 'Uses your location while the card is open. Off by default so it does not drain your battery for four hours.'
-            : 'This course has no green locations yet. Turn on GPS and Bagdrop will look them up.'}
+            : 'This course has no green locations yet. Turn on GPS and Kaddee will look them up.'}
         </Small>
       </Card>
     );
@@ -64,7 +64,7 @@ export function Yardage({ courseId, holeNumber }: Props) {
       <Card>
         <Body>Yardages need location</Body>
         <Small>
-          Location permission was declined. Turn it on for Bagdrop in Settings and reopen the card.
+          Location permission was declined. Turn it on for Kaddee in Settings and reopen the card.
         </Small>
         <Button title="Hide" variant="secondary" onPress={() => setOn(false)} />
       </Card>
@@ -83,7 +83,7 @@ export function Yardage({ courseId, holeNumber }: Props) {
             onto each one and tap the button below.
           </Small>
         ) : (
-          <Small>Bagdrop can look this course up in OpenStreetMap. It takes a few seconds.</Small>
+          <Small>Kaddee can look this course up in OpenStreetMap. It takes a few seconds.</Small>
         )}
         <Row gap={spacing.sm}>
           <Button
@@ -217,7 +217,7 @@ export function Yardage({ courseId, holeNumber }: Props) {
         </>
       ) : (
         <Small>
-          Add your club distances in Profile and Bagdrop will suggest one from here.
+          Add your club distances in Profile and Kaddee will suggest one from here.
         </Small>
       )}
 

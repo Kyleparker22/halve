@@ -223,7 +223,7 @@ out geom;`;
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         // Overpass asks for a contactable agent; an anonymous flood gets blocked.
-        'User-Agent': 'Bagdrop/1.0 (golf scorekeeping; https://bagdrop.golf)',
+        'User-Agent': 'Kaddee/1.0 (golf scorekeeping)',
       },
       body: `data=${encodeURIComponent(query)}`,
     });

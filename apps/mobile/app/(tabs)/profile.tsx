@@ -238,7 +238,7 @@ export default function ProfileScreen() {
       </Row>
 
       <Small>
-        Bagdrop is a scorekeeping and expense-splitting tool for friends. It never holds or transfers
+        Kaddee is a scorekeeping and expense-splitting tool for friends. It never holds or transfers
         money.
       </Small>
       {/*

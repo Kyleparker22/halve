@@ -55,7 +55,7 @@ export default function BagScreen() {
       {bag.length === 0 ? (
         <EmptyState
           title="Nothing in the bag yet"
-          hint="Add a few clubs and Bagdrop will suggest one from the fairway, adjusted for wind, elevation and temperature."
+          hint="Add a few clubs and Kaddee will suggest one from the fairway, adjusted for wind, elevation and temperature."
         />
       ) : (
         <Card>
