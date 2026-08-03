@@ -94,7 +94,6 @@
           "project": "halve-mobile"
         }
       ],
-      "@sentry/react-native",
       "expo-status-bar"
     ],
     "experiments": {
