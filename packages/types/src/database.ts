@@ -39,6 +39,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      broadcast_segments: {
+        Row: {
+          audio_path: string | null
+          created_at: string | null
+          hole_number: number | null
+          id: string
+          media_id: string | null
+          round_id: string
+          script: Json
+        }
+        Insert: {
+          audio_path?: string | null
+          created_at?: string | null
+          hole_number?: number | null
+          id?: string
+          media_id?: string | null
+          round_id: string
+          script: Json
+        }
+        Update: {
+          audio_path?: string | null
+          created_at?: string | null
+          hole_number?: number | null
+          id?: string
+          media_id?: string | null
+          round_id?: string
+          script?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_segments_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "round_media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_segments_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_search_log: {
         Row: {
           hits: number
@@ -194,6 +239,7 @@ export type Database = {
           id: string
           invite_code: string
           name: string
+          roast_level: string
         }
         Insert: {
           avatar_url?: string | null
@@ -202,6 +248,7 @@ export type Database = {
           id?: string
           invite_code: string
           name: string
+          roast_level?: string
         }
         Update: {
           avatar_url?: string | null
@@ -210,6 +257,7 @@ export type Database = {
           id?: string
           invite_code?: string
           name?: string
+          roast_level?: string
         }
         Relationships: [
           {
@@ -937,6 +985,67 @@ export type Database = {
           },
         ]
       }
+      round_media: {
+        Row: {
+          caption: string | null
+          created_at: string | null
+          hole_number: number | null
+          id: string
+          kind: string
+          round_id: string
+          storage_path: string
+          subject_player_id: string | null
+          uploaded_by: string
+          used_at: string | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string | null
+          hole_number?: number | null
+          id?: string
+          kind: string
+          round_id: string
+          storage_path: string
+          subject_player_id?: string | null
+          uploaded_by: string
+          used_at?: string | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string | null
+          hole_number?: number | null
+          id?: string
+          kind?: string
+          round_id?: string
+          storage_path?: string
+          subject_player_id?: string | null
+          uploaded_by?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "round_media_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "rounds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "round_media_subject_player_id_fkey"
+            columns: ["subject_player_id"]
+            isOneToOne: false
+            referencedRelation: "round_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "round_media_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       round_players: {
         Row: {
           created_at: string | null
@@ -1001,6 +1110,55 @@ export type Database = {
             columns: ["tee_id"]
             isOneToOne: false
             referencedRelation: "tees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      round_storylines: {
+        Row: {
+          body: string
+          created_at: string | null
+          id: string
+          round_id: string
+          subject_player_id: string
+          submitted_by: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          id?: string
+          round_id: string
+          subject_player_id: string
+          submitted_by: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          id?: string
+          round_id?: string
+          subject_player_id?: string
+          submitted_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "round_storylines_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "rounds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "round_storylines_subject_player_id_fkey"
+            columns: ["subject_player_id"]
+            isOneToOne: false
+            referencedRelation: "round_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "round_storylines_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
