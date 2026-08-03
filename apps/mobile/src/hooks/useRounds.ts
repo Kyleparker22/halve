@@ -119,6 +119,7 @@ export function useRoundBundle(roundId: string | undefined) {
         round: row,
         courseName: courseLabel(row.courses),
         teeName: row.tees?.name ?? null,
+        tee: row.tees ?? null,
         holes: played.map((h) => ({
           number: h.number,
           par: h.par,
@@ -243,6 +244,92 @@ export function useCreateRound() {
       return round;
     },
     onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.rounds }),
+  });
+}
+
+export interface AddRoundPlayersInput {
+  /** Crew members to invite. */
+  profileIds?: string[];
+  /** Crew guests to add — they have no account, so they are in by definition. */
+  guestIds?: string[];
+  /** Playing handicap per profile, same rule as at scheduling time. */
+  playingHandicaps?: Record<string, number | null>;
+}
+
+/**
+ * A roster is not settled at scheduling time — someone always says yes on
+ * Friday night. Positions continue from the existing roster rather than being
+ * renumbered, because position drives scorecard column order and shuffling it
+ * mid-round would move every column under the scorer's thumb.
+ */
+export function useAddRoundPlayers(roundId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: AddRoundPlayersInput) => {
+      const { data: round, error: roundError } = await supabase
+        .from('rounds')
+        .select('tee_id')
+        .eq('id', roundId)
+        .single();
+      if (roundError) throw roundError;
+
+      const { data: existing, error: existingError } = await supabase
+        .from('round_players')
+        .select('position')
+        .eq('round_id', roundId);
+      if (existingError) throw existingError;
+
+      let next = (existing ?? []).reduce((max, row) => Math.max(max, row.position ?? 0), 0);
+
+      const rows = [
+        ...(input.profileIds ?? []).map((profileId) => ({
+          round_id: roundId,
+          profile_id: profileId,
+          guest_id: null,
+          rsvp: 'invited' as RsvpStatus,
+          position: (next += 1),
+          tee_id: round.tee_id,
+          playing_handicap: input.playingHandicaps?.[profileId] ?? null,
+        })),
+        ...(input.guestIds ?? []).map((guestId) => ({
+          round_id: roundId,
+          profile_id: null,
+          guest_id: guestId,
+          rsvp: 'in' as RsvpStatus,
+          position: (next += 1),
+          tee_id: round.tee_id,
+          playing_handicap: null,
+        })),
+      ];
+      if (rows.length === 0) return;
+
+      const { error } = await supabase.from('round_players').insert(rows);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.roundBundle(roundId) });
+      void client.invalidateQueries({ queryKey: queryKeys.rounds });
+    },
+  });
+}
+
+/**
+ * Only legal before the player has a score. The database enforces that — a
+ * cascade would otherwise take their game_results with them and leave the game
+ * not summing to zero — so this surfaces the constraint message rather than
+ * pre-judging it, and the two can never disagree.
+ */
+export function useRemoveRoundPlayer(roundId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (roundPlayerId: string) => {
+      const { error } = await supabase.from('round_players').delete().eq('id', roundPlayerId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.roundBundle(roundId) });
+      void client.invalidateQueries({ queryKey: queryKeys.rounds });
+    },
   });
 }
 

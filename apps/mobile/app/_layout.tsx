@@ -79,6 +79,7 @@ function RootNavigator() {
         <Stack.Screen name="round/[id]/index" options={{ title: 'Round' }} />
         <Stack.Screen name="round/[id]/score" options={{ title: 'Scorecard' }} />
         <Stack.Screen name="round/[id]/card" options={{ title: 'Full card' }} />
+        <Stack.Screen name="round/[id]/roster" options={{ title: 'Roster' }} />
         <Stack.Screen name="round/[id]/games" options={{ title: 'Games' }} />
         <Stack.Screen name="round/[id]/recap" options={{ title: 'Recap' }} />
         <Stack.Screen name="trip/new" options={{ title: 'New trip' }} />

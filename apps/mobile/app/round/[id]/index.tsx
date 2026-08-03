@@ -76,9 +76,18 @@ export default function RoundScreen() {
       <Card>
         <Row justify="space-between">
           <Heading>Roster</Heading>
-          <Small>
-            {inCount} in{openSeats > 0 ? ` · ${openSeats} open` : ''}
-          </Small>
+          <Row gap={8}>
+            <Small>
+              {inCount} in{openSeats > 0 ? ` · ${openSeats} open` : ''}
+            </Small>
+            {round.status !== 'completed' ? (
+              <Button
+                title="Edit"
+                variant="secondary"
+                onPress={() => router.push(`/round/${id}/roster`)}
+              />
+            ) : null}
+          </Row>
         </Row>
         {roster.map((player) => (
           <Row key={player.id} justify="space-between">

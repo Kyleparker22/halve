@@ -128,6 +128,13 @@ export interface RoundBundle {
   round: RoundRow;
   courseName: string;
   teeName: string | null;
+  /**
+   * The whole tee, not just its name: rating, slope and par are what a playing
+   * handicap is computed from, and a player added to the roster after
+   * scheduling needs the same computation the scheduler did. Without it they
+   * join off scratch.
+   */
+  tee: TeeRow | null;
   holes: Array<{ number: number; par: number; strokeIndex: number; yardage: number | null }>;
   roster: RosterEntry[];
   /**

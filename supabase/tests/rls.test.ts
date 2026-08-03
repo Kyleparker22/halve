@@ -397,8 +397,13 @@ describe('account deletion is a tombstone (§10)', () => {
   });
 
   it('a hard delete of a profile with ledger history is still refused', async () => {
+    // Which guard stops it is not the point and has changed once already: the
+    // roster trigger now refuses first, because a profile delete cascades into
+    // round_players and would take a scored player's game_results with it. The
+    // invariant is that a profile with financial history cannot be erased, by
+    // whichever rule gets there first — so match the outcome, not the message.
     await expect(db.query(`delete from profiles where id = $1`, [SEED.kyle])).rejects.toThrow(
-      /foreign key|violates/i,
+      /foreign key|violates|game results|already scored/i,
     );
   });
 });
