@@ -35,11 +35,23 @@ export interface TripMemberEntry extends TripMemberRow {
   settlesToProfileId: string | null;
 }
 
+export interface PairedPlayer {
+  roundPlayerId: string;
+  name: string;
+  groupNumber: number | null;
+}
+
 export interface TripDetail {
   trip: TripRow;
   members: TripMemberEntry[];
   rooms: RoomRow[];
   rounds: RoundRow[];
+  /**
+   * The pairings actually stored on each round, keyed by round id. Read rather
+   * than recomputed: a generated-on-render pairing cannot be overridden and
+   * silently reshuffles whenever the roster moves.
+   */
+  pairingsByRound: Record<string, PairedPlayer[]>;
 }
 
 export function useTrip(tripId: string | undefined) {
@@ -69,6 +81,35 @@ export function useTrip(tripId: string | undefined) {
         }
       >;
 
+      const roundList = (rounds.data ?? []) as RoundRow[];
+
+      const pairingsByRound: Record<string, PairedPlayer[]> = {};
+      if (roundList.length > 0) {
+        const { data: paired } = await supabase
+          .from('round_players')
+          .select('id, round_id, group_number, position, profiles(display_name), crew_guests(name)')
+          .in(
+            'round_id',
+            roundList.map((r) => r.id),
+          )
+          .order('group_number', { nullsFirst: false })
+          .order('position');
+
+        for (const row of (paired ?? []) as unknown as Array<{
+          id: string;
+          round_id: string;
+          group_number: number | null;
+          profiles: { display_name: string } | null;
+          crew_guests: { name: string } | null;
+        }>) {
+          (pairingsByRound[row.round_id] ??= []).push({
+            roundPlayerId: row.id,
+            name: row.profiles?.display_name ?? row.crew_guests?.name ?? 'Player',
+            groupNumber: row.group_number,
+          });
+        }
+      }
+
       return {
         trip: trip as TripRow,
         members: rows.map((row) => ({
@@ -78,7 +119,8 @@ export function useTrip(tripId: string | undefined) {
           settlesToProfileId: row.profile_id ?? row.crew_guests?.vouched_by ?? null,
         })),
         rooms: (rooms.data ?? []) as RoomRow[],
-        rounds: (rounds.data ?? []) as RoundRow[],
+        rounds: roundList,
+        pairingsByRound,
       };
     },
   });
@@ -333,6 +375,114 @@ export function useJoinTrip() {
       return data as string;
     },
     onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.trips }),
+  });
+}
+
+/**
+ * Writes the generated pairings onto the trip's rounds, creating a round_player
+ * for any trip member who is not on that round yet.
+ *
+ * Rounds that have already been played are left alone. Regenerating pairings
+ * mid-trip is normal — someone drops out on day two — and renumbering a round
+ * people have already scored would move the groups out from under a card that
+ * is already filled in.
+ */
+export function useGeneratePairings(tripId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ groupSize = 4 }: { groupSize?: number } = {}) => {
+      const [{ data: memberRows }, { data: roundRows }] = await Promise.all([
+        supabase.from('trip_members').select('id, profile_id, guest_id, status').eq('trip_id', tripId),
+        supabase
+          .from('rounds')
+          .select('id, tee_id, status')
+          .eq('trip_id', tripId)
+          .order('scheduled_at', { ascending: true }),
+      ]);
+
+      const going = (memberRows ?? []).filter((m) => m.status === 'in');
+      const rounds = (roundRows ?? []).filter((r) => r.status === 'scheduled');
+      if (going.length === 0 || rounds.length === 0) return { rounds: 0 };
+
+      const plan = generatePairings(
+        going.map((m) => m.id),
+        rounds.length,
+        groupSize,
+      );
+
+      for (const [roundIndex, round] of rounds.entries()) {
+        const { data: existing } = await supabase
+          .from('round_players')
+          .select('id, profile_id, guest_id, position')
+          .eq('round_id', round.id);
+
+        // A trip member and a round player are the same person identified two
+        // ways; match on whichever id they carry.
+        const keyOf = (row: { profile_id: string | null; guest_id: string | null }) =>
+          row.profile_id ? `p:${row.profile_id}` : `g:${row.guest_id}`;
+        const byKey = new Map((existing ?? []).map((row) => [keyOf(row), row]));
+        let nextPosition = (existing ?? []).reduce((max, r) => Math.max(max, r.position ?? 0), 0);
+
+        for (const [groupIndex, group] of (plan[roundIndex] ?? []).entries()) {
+          for (const memberId of group) {
+            const member = going.find((m) => m.id === memberId);
+            if (!member) continue;
+            const existingRow = byKey.get(keyOf(member));
+
+            if (existingRow) {
+              const { error } = await supabase
+                .from('round_players')
+                .update({ group_number: groupIndex + 1 })
+                .eq('id', existingRow.id);
+              if (error) throw error;
+            } else {
+              const { error } = await supabase.from('round_players').insert({
+                round_id: round.id,
+                profile_id: member.profile_id,
+                guest_id: member.guest_id,
+                rsvp: member.profile_id ? 'invited' : 'in',
+                position: (nextPosition += 1),
+                tee_id: round.tee_id,
+                group_number: groupIndex + 1,
+                playing_handicap: null,
+              });
+              if (error) throw error;
+            }
+          }
+        }
+      }
+
+      return { rounds: rounds.length };
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.trip(tripId) });
+      void client.invalidateQueries({ queryKey: queryKeys.rounds });
+    },
+  });
+}
+
+/** Move one player into a different group — the manual override M6 asks for. */
+export function useSetPlayerGroup(tripId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      roundPlayerId,
+      groupNumber,
+    }: {
+      roundPlayerId: string;
+      groupNumber: number | null;
+    }) => {
+      const { error } = await supabase
+        .from('round_players')
+        .update({ group_number: groupNumber })
+        .eq('id', roundPlayerId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      void client.invalidateQueries({ queryKey: queryKeys.trip(tripId) });
+      void client.invalidateQueries({ queryKey: ['round'] });
+      void variables;
+    },
   });
 }
 

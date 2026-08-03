@@ -901,6 +901,7 @@ export type Database = {
       round_players: {
         Row: {
           created_at: string | null
+          group_number: number | null
           guest_id: string | null
           id: string
           playing_handicap: number | null
@@ -912,6 +913,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          group_number?: number | null
           guest_id?: string | null
           id?: string
           playing_handicap?: number | null
@@ -923,6 +925,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          group_number?: number | null
           guest_id?: string | null
           id?: string
           playing_handicap?: number | null

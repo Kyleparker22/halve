@@ -13,7 +13,7 @@ import {
   Small,
   Title,
 } from '../../../src/components/ui';
-import { generatePairings, useTrip } from '../../../src/hooks/useTrips';
+import { useTrip } from '../../../src/hooks/useTrips';
 
 export default function TripScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,14 +24,12 @@ export default function TripScreen() {
   if (trip.error) return <ErrorNote error={trip.error} />;
   if (!trip.data) return null;
 
-  const { trip: detail, members, rooms, rounds } = trip.data;
+  const { trip: detail, members, rooms, rounds, pairingsByRound } = trip.data;
   const going = members.filter((m) => m.status === 'in');
   const unassigned = going.filter((m) => !m.room_id);
-  const pairings = generatePairings(
-    going.map((m) => m.id),
-    Math.max(1, rounds.length),
+  const paired = Object.values(pairingsByRound).some((players) =>
+    players.some((p) => p.groupNumber !== null),
   );
-  const nameFor = (memberId: string) => members.find((m) => m.id === memberId)?.name ?? 'Player';
 
   return (
     <Screen>
@@ -114,18 +112,42 @@ export default function TripScreen() {
         ))}
       </Card>
 
-      {going.length >= 4 && rounds.length > 0 ? (
-        <Card>
+      <Card>
+        <Row justify="space-between">
           <Heading>Pairings</Heading>
+          <Button
+            title={paired ? 'Manage' : 'Set them up'}
+            variant="secondary"
+            onPress={() => router.push(`/trip/${id}/pairings`)}
+          />
+        </Row>
+        {!paired ? (
           <Small>Nobody plays with the same person twice until they have to.</Small>
-          {pairings.map((groups, roundIndex) => (
-            <Row key={roundIndex} justify="space-between">
-              <Small>Day {roundIndex + 1}</Small>
-              <Small>{groups.map((g) => g.map(nameFor).join(', ')).join('  |  ')}</Small>
-            </Row>
-          ))}
-        </Card>
-      ) : null}
+        ) : (
+          rounds.map((round, roundIndex) => {
+            const players = pairingsByRound[round.id] ?? [];
+            const numbers = [
+              ...new Set(players.map((p) => p.groupNumber).filter((n): n is number => n !== null)),
+            ].sort((a, b) => a - b);
+            if (numbers.length === 0) return null;
+            return (
+              <Row key={round.id} justify="space-between">
+                <Small>Day {roundIndex + 1}</Small>
+                <Small>
+                  {numbers
+                    .map((n) =>
+                      players
+                        .filter((p) => p.groupNumber === n)
+                        .map((p) => p.name)
+                        .join(', '),
+                    )
+                    .join('  |  ')}
+                </Small>
+              </Row>
+            );
+          })
+        )}
+      </Card>
 
       <Button title="Expenses" onPress={() => router.push(`/trip/${id}/expenses`)} />
       <Button title="Trip money" onPress={() => router.push(`/trip/${id}/settle`)} />
