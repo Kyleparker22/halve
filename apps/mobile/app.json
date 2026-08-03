@@ -25,7 +25,7 @@
     "android": {
       "package": "golf.halve.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0B3D2E",
+        "backgroundColor": "#181B1F",
         "foregroundImage": "./assets/adaptive-icon.png"
       },
       "intentFilters": [
@@ -67,7 +67,7 @@
       [
         "expo-notifications",
         {
-          "color": "#0B3D2E"
+          "color": "#3DDC7F"
         }
       ],
       [
@@ -85,9 +85,9 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 180,
           "resizeMode": "contain",
-          "backgroundColor": "#0B3D2E",
+          "backgroundColor": "#181B1F",
           "dark": {
-            "backgroundColor": "#0D110C"
+            "backgroundColor": "#181B1F"
           }
         }
       ]

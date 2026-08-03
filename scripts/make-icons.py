@@ -5,58 +5,58 @@ Generates the app icon, adaptive icon and splash mark for Bagdrop.
 Checked in so the mark can be adjusted without a design tool round trip. It is
 not a substitute for a designer — it is a real icon instead of Expo's default.
 
-The mark: a luggage tag whose punch hole is the cup. Bagdrop is the airport
-term and the golf term at once — the moment you pull up, unload, and find your
-group — and the tag carries both halves in one shape. The orange hole is the
-only detail, because at 40 points a detail is all you get.
+The mark: the cup seen from directly above, with a ball resting on the lip.
+Two shapes and three colours, because at 40 points that is all that survives —
+a tag, a bag or a pin all turned to mush or read as somebody else's icon.
+
+Charcoal rather than green as the background is the deliberate part. Every golf
+app is a saturated green rectangle, so green as the field makes you invisible
+in the category; green as the accent on charcoal does the opposite. Deep
+fairway green was tried here first and disappeared against the charcoal — the
+brighter green is what makes the ring hold at small sizes.
 
     python3 scripts/make-icons.py
 """
 
 from PIL import Image, ImageDraw
 
-FAIRWAY = (11, 61, 46)      # #0B3D2E
-BONE = (246, 244, 239)      # #F6F4EF
-FLAG = (228, 87, 46)        # #E4572E
+CHARCOAL = (24, 27, 31)     # #181B1F — the field
+GREEN = (61, 220, 127)      # #3DDC7F — the cup
+WHITE = (255, 255, 255)     # the ball
 
 SIZE = 1024
 SS = 4  # supersample; Pillow does not antialias its draw primitives
 
 
-def draw_mark(canvas: int, width: int, background=None) -> Image.Image:
-    """The tag, centred. Transparent background unless one is given."""
+def draw_mark(canvas: int, diameter: int, background=None) -> Image.Image:
+    """The cup from above, ball on the lip. Transparent unless given a field."""
     big = canvas * SS
     fill = (*background, 255) if background else (0, 0, 0, 0)
     image = Image.new("RGBA", (big, big), fill)
     draw = ImageDraw.Draw(image)
 
-    w = width * SS
-    h = int(w * 0.62)
-    left = (big - w) // 2
-    top = (big - h) // 2
-    right, bottom = left + w, top + h
+    r = (diameter * SS) // 2
+    cx = cy = big // 2
+    weight = int(r * 0.30)
 
-    radius = int(h * 0.20)
-    point = int(w * 0.30)   # how far the angled end reaches in
+    # The ring is drawn as a filled disc with the middle punched back out to the
+    # field. On a transparent canvas that has to be a real hole, not a charcoal
+    # disc, or the adaptive icon ships with a square of background baked in.
+    draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=GREEN)
+    inner = [cx - r + weight, cy - r + weight, cx + r - weight, cy + r - weight]
+    if background:
+        draw.ellipse(inner, fill=(*background, 255))
+    else:
+        hole = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        ImageDraw.Draw(hole).ellipse(inner, fill=(0, 0, 0, 255))
+        image.paste((0, 0, 0, 0), (0, 0), hole)
+        draw = ImageDraw.Draw(image)
 
-    # Body: rounded on the right, squared off on the left. The squaring matters
-    # — the taper has to run off a sharp corner. Leave those corners rounded and
-    # the diagonal overshoots them, leaving a nub at each end; move the taper
-    # inboard to avoid the nub and you get a flat edge that reads as a wallet.
-    draw.rounded_rectangle([left + point, top, right, bottom], radius=radius, fill=BONE)
-    draw.rectangle([left + point, top, left + point + radius, bottom], fill=BONE)
-    draw.polygon(
-        [(left, top + h // 2), (left + point, top), (left + point, bottom)],
-        fill=BONE,
-    )
-
-    # The punch hole, which is also the cup. The only detail in the mark.
-    hole_r = int(h * 0.16)
-    hole_cx = left + point - int(h * 0.06)
-    draw.ellipse(
-        [hole_cx - hole_r, top + h // 2 - hole_r, hole_cx + hole_r, top + h // 2 + hole_r],
-        fill=FLAG,
-    )
+    # Offset up and right so it reads as resting on the lip rather than centred
+    # in the hole, which looks like a target.
+    br = int(r * 0.42)
+    bx, by = cx + int(r * 0.30), cy - int(r * 0.30)
+    draw.ellipse([bx - br, by - br, bx + br, by + br], fill=WHITE)
 
     return image.resize((canvas, canvas), Image.LANCZOS)
 
@@ -73,16 +73,16 @@ def main() -> None:
 
     # Store icon. Full bleed, square, no alpha, no rounded corners — the
     # platforms mask it themselves and baking a radius in looks wrong.
-    flatten(draw_mark(SIZE, int(SIZE * 0.66), background=FAIRWAY), FAIRWAY).save(f"{out}/icon.png")
+    flatten(draw_mark(SIZE, int(SIZE * 0.54), background=CHARCOAL), CHARCOAL).save(f"{out}/icon.png")
 
     # Android adaptive foreground. The outer ~25% is cropped by whichever mask
     # the launcher applies, so the mark has to sit well inside it.
-    draw_mark(SIZE, int(SIZE * 0.48)).save(f"{out}/adaptive-icon.png")
+    draw_mark(SIZE, int(SIZE * 0.40)).save(f"{out}/adaptive-icon.png")
 
     # Splash. Transparent, on the background set in app.json.
-    draw_mark(SIZE, int(SIZE * 0.46)).save(f"{out}/splash-icon.png")
+    draw_mark(SIZE, int(SIZE * 0.38)).save(f"{out}/splash-icon.png")
 
-    flatten(draw_mark(64, 44, background=FAIRWAY), FAIRWAY).save(f"{out}/favicon.png")
+    flatten(draw_mark(64, 36, background=CHARCOAL), CHARCOAL).save(f"{out}/favicon.png")
 
     print("wrote icon.png, adaptive-icon.png, splash-icon.png, favicon.png")
 
