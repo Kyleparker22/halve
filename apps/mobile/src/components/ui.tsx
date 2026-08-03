@@ -283,6 +283,65 @@ export function EmptyState({
   );
 }
 
+/**
+ * Two-or-three-way segmented toggle — the pattern every tab now uses for its
+ * Live/Scheduled/Past style filters. One component so they all behave and look
+ * the same.
+ */
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: Array<{ value: T; label: string }>;
+  value: T;
+  onChange: (next: T) => void;
+}) {
+  const theme = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        backgroundColor: theme.card,
+        borderRadius: radius.md,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: theme.border,
+        padding: 3,
+      }}
+    >
+      {options.map((option) => {
+        const active = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            onPress={() => onChange(option.value)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            style={{
+              flex: 1,
+              minHeight: 36,
+              borderRadius: radius.sm,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: active ? theme.accent : 'transparent',
+            }}
+          >
+            <Text
+              style={{
+                color: active ? theme.accentText : theme.muted,
+                fontWeight: '600',
+                fontSize: 14,
+              }}
+            >
+              {option.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 export function Loading({ label }: { label?: string }) {
   const theme = useTheme();
   return (

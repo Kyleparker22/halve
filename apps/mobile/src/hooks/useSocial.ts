@@ -108,6 +108,58 @@ export function useFeed(crewId: string | undefined) {
 }
 
 /**
+ * The Social tab: one feed across every crew you belong to.
+ *
+ * No new table and no new read surface — feed_items is already RLS-scoped to
+ * your crews, so querying it without a crew filter *is* the cross-crew feed.
+ * Each entry carries its crew's name so a person in three crews can tell which
+ * group a round belongs to.
+ */
+export interface SocialFeedEntry extends FeedEntry {
+  crewName: string;
+}
+
+export function useSocialFeed(enabled: boolean) {
+  return useQuery({
+    queryKey: ['social-feed'],
+    enabled,
+    staleTime: 1000 * 60,
+    queryFn: async (): Promise<SocialFeedEntry[]> => {
+      const { data, error } = await supabase
+        .from('feed_items')
+        .select(
+          '*, actor:profiles(*), crews(name), reactions(emoji, profile_id), feed_comments(id)',
+        )
+        .order('created_at', { ascending: false })
+        .limit(80);
+      if (error) throw error;
+
+      return (
+        (data ?? []) as unknown as Array<
+          FeedItemRow & {
+            actor: ProfileRow | null;
+            crews: { name: string } | null;
+            reactions: Array<{ emoji: string; profile_id: string }>;
+            feed_comments: Array<{ id: string }>;
+          }
+        >
+      ).map((row) => {
+        const reactions: Record<string, string[]> = {};
+        for (const reaction of row.reactions ?? []) {
+          (reactions[reaction.emoji] ??= []).push(reaction.profile_id);
+        }
+        return {
+          ...row,
+          crewName: row.crews?.name ?? 'a crew',
+          reactions,
+          commentCount: (row.feed_comments ?? []).length,
+        };
+      });
+    },
+  });
+}
+
+/**
  * Toggling, not adding. The primary key is (item, profile, emoji), so a plain
  * upsert made a reaction permanent — you could add a laugh and never take it
  * back, which is not how any feed anyone has used behaves.

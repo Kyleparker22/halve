@@ -23,8 +23,9 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: theme.bg },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Crews', tabBarIcon: icon('◆') }} />
+      <Tabs.Screen name="index" options={{ title: 'Friends', tabBarIcon: icon('◆') }} />
       <Tabs.Screen name="rounds" options={{ title: 'Rounds', tabBarIcon: icon('⛳') }} />
+      <Tabs.Screen name="social" options={{ title: 'Social', tabBarIcon: icon('✦') }} />
       <Tabs.Screen name="trips" options={{ title: 'Trips', tabBarIcon: icon('✈') }} />
       <Tabs.Screen name="profile" options={{ title: 'You', tabBarIcon: icon('●') }} />
     </Tabs>

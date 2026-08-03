@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
   Body,
@@ -9,20 +10,26 @@ import {
   Money,
   Row,
   Screen,
+  Segmented,
   SkeletonList,
   Small,
   Title,
 } from '../../src/components/ui';
 import { useCrews } from '../../src/hooks/useCrews';
+import { useFriends } from '../../src/hooks/useFriends';
 import { useSession } from '../../src/hooks/useSession';
 import { useOpenSeats } from '../../src/hooks/useSocial';
 import { useRounds } from '../../src/hooks/useRounds';
 import { useCrewBalancesForMe } from '../../src/hooks/useBalances';
 
-export default function CrewsScreen() {
+type FriendsView = 'people' | 'crews';
+
+export default function FriendsScreen() {
   const router = useRouter();
   const { session } = useSession();
+  const [view, setView] = useState<FriendsView>('people');
   const crews = useCrews(session?.user.id);
+  const friends = useFriends(session?.user.id);
   const balances = useCrewBalancesForMe(session?.user.id);
   const seats = useOpenSeats();
   const rounds = useRounds(session?.user.id);
@@ -30,7 +37,7 @@ export default function CrewsScreen() {
   if (crews.isLoading)
     return (
       <Screen>
-        <Title>Crews</Title>
+        <Title>Friends</Title>
         <SkeletonList />
       </Screen>
     );
@@ -39,21 +46,22 @@ export default function CrewsScreen() {
   const balanceFor = (crewId: string) =>
     balances.data?.find((b) => b.crew_id === crewId)?.net_cents ?? 0;
 
+  const noCrews = (crews.data ?? []).length === 0;
+
   return (
     <Screen>
       <Row justify="space-between">
-        <Title>Crews</Title>
+        <Title>Friends</Title>
         <Button title="New crew" variant="secondary" onPress={() => router.push('/crew/new')} />
       </Row>
 
       {/* The first screen after sign-up. A dead end here is where new users
-          leave, so it says what to do and hands over the button — including
-          the invite-code path, which was previously reachable only by tapping
-          "New crew", which is the last thing someone with a code would tap. */}
-      {(crews.data ?? []).length === 0 ? (
+          leave — and with no crew there are no friends either, so the toggle
+          would be two empty lists. Show the door instead. */}
+      {noCrews ? (
         <EmptyState
           title="Start with your regular four"
-          hint="A crew is the group you actually play with. Everything — scores, side games, who owes who — hangs off it. You can play a round on your own too; add the others whenever."
+          hint="A crew is the group you actually play with. Everything — friends, scores, side games, who owes who — hangs off it."
           actions={[
             { label: 'Start a crew', onPress: () => router.push('/crew/new') },
             {
@@ -63,11 +71,20 @@ export default function CrewsScreen() {
             },
           ]}
         />
-      ) : null}
+      ) : (
+        <Segmented
+          options={[
+            { value: 'people', label: 'Friends' },
+            { value: 'crews', label: 'Crews' },
+          ]}
+          value={view}
+          onChange={setView}
+        />
+      )}
 
       {/* Has a crew, has never played. The next step is a round, not another
           crew, and nothing on this screen said so. */}
-      {(crews.data ?? []).length > 0 && (rounds.data ?? []).length === 0 ? (
+      {!noCrews && (rounds.data ?? []).length === 0 ? (
         <EmptyState
           title="Now put a round on the books"
           hint="Pick a course and a time. Scoring works with no signal, so the course being a dead zone does not matter."
@@ -75,18 +92,51 @@ export default function CrewsScreen() {
         />
       ) : null}
 
-      {(crews.data ?? []).map((crew) => (
-        <Card key={crew.id} onPress={() => router.push(`/crew/${crew.id}`)}>
-          <Row justify="space-between">
-            <Heading>{crew.name}</Heading>
-            <Money cents={balanceFor(crew.id)} />
-          </Row>
-          <Small>
-            {crew.memberCount} {crew.memberCount === 1 ? 'member' : 'members'} ·{' '}
-            {crew.role === 'member' ? "you're a member" : `you're the ${crew.role}`}
-          </Small>
-        </Card>
-      ))}
+      {!noCrews && view === 'people' ? (
+        <>
+          {(friends.data ?? []).length === 0 ? (
+            <EmptyState
+              title="Nobody yet"
+              hint="Friends are the people in your crews. Get the group in and they show up here."
+              actions={[
+                {
+                  label: 'Invite the crew',
+                  onPress: () => router.push(`/crew/${crews.data![0]!.id}`),
+                },
+              ]}
+            />
+          ) : (
+            (friends.data ?? []).map((friend) => (
+              <Card key={friend.profileId}>
+                <Row justify="space-between">
+                  <Body>{friend.name}</Body>
+                  <Small>{friend.handicap !== null ? `${friend.handicap} hcp` : 'no index'}</Small>
+                </Row>
+                <Small>
+                  @{friend.handle}
+                  {friend.location ? ` · ${friend.location}` : ''}
+                  {friend.sharedCrews.length > 0 ? ` · ${friend.sharedCrews.join(', ')}` : ''}
+                </Small>
+              </Card>
+            ))
+          )}
+        </>
+      ) : null}
+
+      {!noCrews && view === 'crews'
+        ? (crews.data ?? []).map((crew) => (
+            <Card key={crew.id} onPress={() => router.push(`/crew/${crew.id}`)}>
+              <Row justify="space-between">
+                <Heading>{crew.name}</Heading>
+                <Money cents={balanceFor(crew.id)} />
+              </Row>
+              <Small>
+                {crew.memberCount} {crew.memberCount === 1 ? 'member' : 'members'} ·{' '}
+                {crew.role === 'member' ? "you're a member" : `you're the ${crew.role}`}
+              </Small>
+            </Card>
+          ))
+        : null}
 
       {(seats.data ?? []).length > 0 ? (
         <>

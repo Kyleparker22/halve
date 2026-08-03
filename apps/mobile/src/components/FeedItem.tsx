@@ -36,6 +36,9 @@ export function describeFeedItem(type: string, payload: unknown, actorName: stri
     }
     case 'settlement_confirmed':
       return 'Settled up';
+    case 'club_added':
+      // The club, never the distance — bags stay private on the numbers.
+      return `${who} put a new ${String(data.club ?? 'club')} in the bag`;
     default:
       return type.replace(/_/g, ' ');
   }
