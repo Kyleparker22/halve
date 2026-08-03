@@ -85,6 +85,22 @@ In order, because each step rules out everything below it:
    registered. Simulators never register; `registerDevice` returns early on
    anything that is not a physical device.
 
+## Before a public App Store listing
+
+Two pages must be live and reachable. The app links to them from Profile, and
+Apple checks the privacy policy URL during review — an app with accounts and
+account deletion will be rejected without one.
+
+- `https://halve.golf/privacy`
+- `https://halve.golf/terms`
+
+Neither is drafted. They are not boilerplate for this app: it handles money
+positions between named people, stores receipt photos, and processes contact
+data if friend discovery ships. Get them written by someone qualified, along
+with the social-wagering question in the risk register.
+
+TestFlight does not require either — this blocks public listing only.
+
 ## Course data
 
 `GOLFCOURSE_API_KEY` is server-side only and set with `supabase secrets set`.
