@@ -15,6 +15,7 @@ import {
   Small,
   Title,
 } from '../../../src/components/ui';
+import { ShareCard } from '../../../src/components/ShareCard';
 import { useRoundBundle } from '../../../src/hooks/useRounds';
 import { useScorecard } from '../../../src/hooks/useScorecard';
 import { useCompleteRound } from '../../../src/hooks/useGames';
@@ -40,6 +41,41 @@ export default function RecapScreen() {
     .sort((a, b) => a.net - b.net || a.gross - b.gross);
 
   const settled = round.status === 'completed';
+
+  /**
+   * What the share card says. Money is summed across every game — one Nassau
+   * and a skins game is one number to a golfer, not two — and the headline is
+   * the single biggest breakdown line, which is almost always the hole people
+   * will actually argue about.
+   */
+  const moneyByPlayer = new Map<string, number>();
+  for (const line of card.moneyLine) {
+    for (const entry of line.result.perPlayer) {
+      moneyByPlayer.set(
+        entry.roundPlayerId,
+        (moneyByPlayer.get(entry.roundPlayerId) ?? 0) + entry.amountCents,
+      );
+    }
+  }
+  const shareMoney = [...moneyByPlayer.entries()]
+    .map(([roundPlayerId, amountCents]) => ({
+      name: names[roundPlayerId] ?? 'Player',
+      amountCents,
+    }))
+    .sort((a, b) => b.amountCents - a.amountCents);
+
+  const headline =
+    card.moneyLine
+      .flatMap((line) => {
+        const parts = partitionBreakdown(line.result, names);
+        return line.result.perPlayer.flatMap((entry) =>
+          (parts[entry.roundPlayerId]?.lines ?? []).map((bLine) => ({
+            text: bLine.text,
+            weight: Math.abs(entry.amountCents),
+          })),
+        );
+      })
+      .sort((a, b) => b.weight - a.weight)[0]?.text ?? null;
 
   return (
     <Screen>
@@ -85,6 +121,27 @@ export default function RecapScreen() {
           </Card>
         );
       })}
+
+      <Divider />
+
+      {/* The round's natural end is somebody posting the result to the group
+          chat. This is the only thing in the app built to be seen by people who
+          do not have it. */}
+      <ShareCard
+        courseName={courseName}
+        dateLabel={new Date(round.scheduled_at).toLocaleDateString(undefined, {
+          timeZone: round.timezone,
+          weekday: 'long',
+          month: 'short',
+          day: 'numeric',
+        })}
+        money={shareMoney}
+        headline={headline}
+        leaderboard={leaderboard.map((total) => ({
+          name: names[total.roundPlayerId] ?? 'Player',
+          gross: total.gross,
+        }))}
+      />
 
       <Divider />
 

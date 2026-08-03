@@ -98,7 +98,8 @@
           "project": "halve-mobile"
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true
