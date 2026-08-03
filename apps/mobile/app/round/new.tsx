@@ -47,6 +47,25 @@ export default function NewRoundScreen() {
     (crew) => crew.role === 'owner' || crew.role === 'admin',
   );
 
+  /**
+   * Playing handicap off the tee actually being played (Technical Spec §5.1).
+   * Computed once here and persisted with the roster — the games engine reads
+   * it, so leaving it null makes every net game play off scratch.
+   */
+  const handicapFor = (index: number | null): number | null =>
+    index !== null && tee?.rating && tee?.slope
+      ? playingHandicap(
+          courseHandicap({ index, slope: tee.slope, rating: tee.rating, par: tee.par, holeCount }),
+        )
+      : null;
+
+  const playingHandicaps = Object.fromEntries(
+    (members.data ?? []).map((member) => [
+      member.profileId,
+      handicapFor(member.profile.handicap_index),
+    ]),
+  );
+
   return (
     <Screen>
       <Title>Schedule a round</Title>
@@ -145,19 +164,7 @@ export default function NewRoundScreen() {
         <Card>
           <Heading>Who&apos;s invited</Heading>
           {(members.data ?? []).map((member) => {
-            const index = member.profile.handicap_index;
-            const projected =
-              index !== null && tee?.rating && tee?.slope
-                ? playingHandicap(
-                    courseHandicap({
-                      index,
-                      slope: tee.slope,
-                      rating: tee.rating,
-                      par: tee.par,
-                      holeCount,
-                    }),
-                  )
-                : null;
+            const projected = playingHandicaps[member.profileId] ?? null;
             return (
               <Pressable
                 key={member.profileId}
@@ -210,6 +217,7 @@ export default function NewRoundScreen() {
               createdBy: session!.user.id,
               profileIds: Array.from(new Set([session!.user.id, ...invited])),
               guestIds: guests,
+              playingHandicaps,
             },
             { onSuccess: (round) => router.replace(`/round/${round.id}`) },
           )

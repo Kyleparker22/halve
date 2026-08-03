@@ -28,7 +28,15 @@ export default tseslint.config(
     // Node-side config and tooling, not app code.
     files: ['**/*.mjs', '**/*.cjs', '**/metro.config.js', 'scripts/**/*'],
     languageOptions: {
-      globals: { require: 'readonly', module: 'writable', __dirname: 'readonly', console: 'readonly', process: 'readonly' },
+      globals: {
+        require: 'readonly',
+        module: 'writable',
+        __dirname: 'readonly',
+        console: 'readonly',
+        process: 'readonly',
+        fetch: 'readonly',
+        crypto: 'readonly',
+      },
     },
     rules: {
       '@typescript-eslint/no-require-imports': 'off',

@@ -97,6 +97,11 @@ export default function CrewScreen() {
       </Card>
 
       <Button
+        title="Guests"
+        variant="secondary"
+        onPress={() => router.push(`/crew/${id}/guests`)}
+      />
+      <Button
         title="Invite to the crew"
         variant="secondary"
         onPress={() =>

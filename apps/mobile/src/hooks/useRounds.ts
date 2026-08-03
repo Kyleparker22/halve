@@ -175,6 +175,13 @@ export interface CreateRoundInput {
   profileIds: string[];
   /** Crew guests playing. */
   guestIds?: string[];
+  /**
+   * Playing handicap per profile, computed at scheduling time from the tee
+   * actually being played (Technical Spec §5.1). Persisting this matters: the
+   * games engine reads round_players.playing_handicap, so a null here means
+   * every net game silently plays off scratch.
+   */
+  playingHandicaps?: Record<string, number | null>;
 }
 
 export function useCreateRound() {
@@ -213,7 +220,7 @@ export function useCreateRound() {
           rsvp: (profileId === input.createdBy ? 'in' : 'invited') as RsvpStatus,
           position: index + 1,
           tee_id: input.teeId,
-          playing_handicap: null,
+          playing_handicap: input.playingHandicaps?.[profileId] ?? null,
         })),
         ...(input.guestIds ?? []).map((guestId, index) => ({
           round_id: round.id,
