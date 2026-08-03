@@ -96,6 +96,7 @@ export default function CrewScreen() {
         ))}
       </Card>
 
+      <Button title="Season standings" onPress={() => router.push(`/crew/${id}/season`)} />
       <Button
         title="Guests"
         variant="secondary"
