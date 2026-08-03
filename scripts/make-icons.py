@@ -9,19 +9,19 @@ The mark: the cup seen from directly above, with a ball resting on the lip.
 Two shapes and three colours, because at 40 points that is all that survives —
 a tag, a bag or a pin all turned to mush or read as somebody else's icon.
 
-Charcoal rather than green as the background is the deliberate part. Every golf
-app is a saturated green rectangle, so green as the field makes you invisible
-in the category; green as the accent on charcoal does the opposite. Deep
-fairway green was tried here first and disappeared against the charcoal — the
-brighter green is what makes the ring hold at small sizes.
+Green and gold: the most golf-coded palette there is, and the gold is what
+carries it. Gold needs something dark behind it — on white it goes muddy and
+dishwater at 44 points, which is why the light variants were rejected. On green
+it reads like a club crest and the ring is the thing you notice, which is what
+keeps this out of the sea of identical green golf icons.
 
     python3 scripts/make-icons.py
 """
 
 from PIL import Image, ImageDraw
 
-CHARCOAL = (24, 27, 31)     # #181B1F — the field
-GREEN = (61, 220, 127)      # #3DDC7F — the cup
+GREEN = (20, 110, 70)       # #146E46 — the field
+GOLD = (226, 186, 90)       # #E2BA5A — the cup
 WHITE = (255, 255, 255)     # the ball
 
 SIZE = 1024
@@ -42,7 +42,7 @@ def draw_mark(canvas: int, diameter: int, background=None) -> Image.Image:
     # The ring is drawn as a filled disc with the middle punched back out to the
     # field. On a transparent canvas that has to be a real hole, not a charcoal
     # disc, or the adaptive icon ships with a square of background baked in.
-    draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=GREEN)
+    draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=GOLD)
     inner = [cx - r + weight, cy - r + weight, cx + r - weight, cy + r - weight]
     if background:
         draw.ellipse(inner, fill=(*background, 255))
@@ -73,7 +73,7 @@ def main() -> None:
 
     # Store icon. Full bleed, square, no alpha, no rounded corners — the
     # platforms mask it themselves and baking a radius in looks wrong.
-    flatten(draw_mark(SIZE, int(SIZE * 0.54), background=CHARCOAL), CHARCOAL).save(f"{out}/icon.png")
+    flatten(draw_mark(SIZE, int(SIZE * 0.54), background=GREEN), GREEN).save(f"{out}/icon.png")
 
     # Android adaptive foreground. The outer ~25% is cropped by whichever mask
     # the launcher applies, so the mark has to sit well inside it.
@@ -82,7 +82,7 @@ def main() -> None:
     # Splash. Transparent, on the background set in app.json.
     draw_mark(SIZE, int(SIZE * 0.38)).save(f"{out}/splash-icon.png")
 
-    flatten(draw_mark(64, 36, background=CHARCOAL), CHARCOAL).save(f"{out}/favicon.png")
+    flatten(draw_mark(64, 36, background=GREEN), GREEN).save(f"{out}/favicon.png")
 
     print("wrote icon.png, adaptive-icon.png, splash-icon.png, favicon.png")
 

@@ -11,43 +11,55 @@ import { useColorScheme } from 'react-native';
  * fails contrast on a pale background.
  */
 const palette = {
-  charcoal: '#181B1F',
-  green: '#3DDC7F',      // on dark
-  greenDeep: '#0E9F5B',  // the same accent where it has to survive on light
-  flag: '#E4572E',       // attention only: unsettled money, conflicts, requests
-  paper: '#F7F8F7',
-  ink: '#10141A',
+  green: '#146E46',       // the brand, and every primary action
+  greenBright: '#2FA76B', // the same action colour where the field is dark
+  greenDeep: '#0B2A1E',   // dark mode field, matching the icon
+  gold: '#E2BA5A',        // winning
+  goldDeep: '#8A6816',    // the same gold where it has to be legible on white
+  flag: '#C2410C',        // attention: unsettled money, conflicts, requests
+  paper: '#FAFAF7',
+  ink: '#10160F',
   slate: '#6B7280',
-  loss: '#D64545',
+  loss: '#C0392B',
 };
 
+/**
+ * Green acts, gold wins, red owes.
+ *
+ * Splitting the two brand colours by job rather than by decoration is what
+ * makes them mean something: every button is green, so green reads as "do
+ * this", and gold is reserved for being up — which in an app whose whole
+ * subject is who owes who is the thing worth colouring.
+ *
+ * Gold cannot carry text on white; #E2BA5A on paper is about 1.9:1. The light
+ * theme uses a deep gold for anything that has to be read and keeps the bright
+ * one for fills.
+ */
 export const lightTheme = {
   mode: 'light' as const,
   bg: palette.paper,
   card: '#FFFFFF',
-  border: '#E3E6E4',
+  border: '#E5E3DC',
   text: palette.ink,
   muted: palette.slate,
-  accent: palette.greenDeep,
+  accent: palette.green,
   accentText: '#FFFFFF',
   flag: palette.flag,
-  // Money up is the brand green rather than a second, near-identical green.
-  win: palette.greenDeep,
+  win: palette.goldDeep,
   loss: palette.loss,
 };
 
 export const darkTheme = {
   mode: 'dark' as const,
-  bg: palette.charcoal,
-  card: '#20242A',
-  border: '#2E343B',
-  text: '#F2F4F3',
-  muted: '#98A1A9',
-  accent: palette.green,
-  // Dark text on the bright green — white on #3DDC7F is barely 1.7:1.
-  accentText: palette.charcoal,
-  flag: '#F0754C',
-  win: palette.green,
+  bg: palette.greenDeep,
+  card: '#123528',
+  border: '#1E4A37',
+  text: '#F3F6F2',
+  muted: '#8FA79A',
+  accent: palette.greenBright,
+  accentText: '#06170F',
+  flag: '#E4733C',
+  win: palette.gold,
   loss: '#E5675A',
 };
 
