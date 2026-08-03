@@ -69,5 +69,13 @@ secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
 enabled = true
 policy = "oneshot"
 
+# Called by pg_cron through pg_net, which has no user session to present. It
+# authenticates with the PUSH_DISPATCH_SECRET shared secret instead — see
+# supabase/migrations/0011_push_dispatch.sql. Declared here rather than passed
+# as --no-verify-jwt so a later deploy cannot quietly re-enable the check and
+# stop every notification with a 401.
+[functions.push-dispatch]
+verify_jwt = false
+
 [analytics]
 enabled = false

@@ -47,12 +47,28 @@ do $$ begin create role authenticated nologin; exception when duplicate_object t
 do $$ begin create role service_role nologin bypassrls; exception when duplicate_object then null; end $$;
 `;
 
-/** Grants Supabase applies to its roles. RLS, not grants, is the boundary. */
-const GRANTS = `
+/**
+ * Grants Supabase applies to its roles. RLS, not grants, is the boundary — for
+ * tables. For functions the grant *is* the boundary, because a security definer
+ * function bypasses RLS by construction, so this has to be faithful.
+ *
+ * Supabase does it with default privileges, which apply to functions as they
+ * are created. Granting execute on everything after the migrations instead
+ * would silently undo any REVOKE a migration performs, and the test suite would
+ * report a locked-down function as reachable — or worse, an unlocked one as
+ * safe. So these run before the migrations, exactly as on the platform.
+ */
+const DEFAULT_PRIVILEGES = `
 grant usage on schema public, auth to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant execute on functions to anon, authenticated, service_role;
+`;
+
+const GRANTS = `
 grant select, insert, update, delete on all tables in schema public
   to anon, authenticated, service_role;
-grant execute on all functions in schema public to anon, authenticated, service_role;
 grant select on auth.users to authenticated, service_role;
 `;
 
@@ -66,6 +82,7 @@ export interface SetupOptions {
 export async function setupDatabase(options: SetupOptions = {}): Promise<Db> {
   const db = await PGlite.create();
   await db.exec(SUPABASE_SHIM);
+  await db.exec(DEFAULT_PRIVILEGES);
 
   const files = readdirSync(migrationsDir)
     .filter((f) => f.endsWith('.sql'))

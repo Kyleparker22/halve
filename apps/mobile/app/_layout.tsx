@@ -7,7 +7,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { CACHE_BUSTER, persister, queryClient } from '../src/lib/query';
 import { startSyncEngine } from '../src/lib/sync';
 import { identify, initTelemetry } from '../src/lib/analytics';
-import { registerDevice } from '../src/lib/notifications';
+import { registerDevice, useNotificationRouting } from '../src/lib/notifications';
 import { useProfile, useSession } from '../src/hooks/useSession';
 import { useTheme } from '../src/theme';
 import { Loading } from '../src/components/ui';
@@ -29,6 +29,10 @@ function RootNavigator() {
     identify(session.user.id);
     void registerDevice(session.user.id);
   }, [session?.user.id]);
+
+  // Only once there is a session to route into — pushing a round screen over
+  // the sign-in gate would be undone by the redirect below a frame later.
+  useNotificationRouting(!loading && !profileLoading && !!session);
 
   useEffect(() => {
     if (loading || (session && profileLoading)) return;
