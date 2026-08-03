@@ -45,6 +45,12 @@ pnpm dev
 | `pnpm test:db` | The whole migration set applies in one pass, and RLS actually holds |
 | `pnpm vitest run --project offline` | The offline scorecard: local-first writes, version conflicts, force-quit recovery |
 | `pnpm coverage` | The 90% gate on `@halve/games` and `@halve/ledger` |
+| `pnpm test:sync` | The M3 gate: four clients, two offline for holes 5–14, staggered reconnect, one identical card |
+
+`pnpm test:sync` needs a live project and the e2e account; it leaves a round behind each run.
+It covers the sync *contract* — four independent outboxes, version-based conflict resolution,
+convergence. It does not cover the on-device NetInfo wiring, because iOS simulators cannot toggle
+airplane mode; that still wants a human with four handsets.
 
 `pnpm test:db` runs the real migration files against [PGlite](https://pglite.dev), an in-process
 Postgres, so the schema and every RLS policy are verified without Docker. The only things faked are

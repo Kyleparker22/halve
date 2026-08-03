@@ -19,7 +19,8 @@
     "format": "prettier --write .",
     "gen:types": "supabase gen types typescript --linked > packages/types/src/database.ts.new && mv packages/types/src/database.ts.new packages/types/src/database.ts",
     "db:reset": "supabase db reset",
-    "build:functions": "node scripts/build-functions.mjs"
+    "build:functions": "node scripts/build-functions.mjs",
+    "test:sync": "node scripts/four-device-sync.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.3.11",
