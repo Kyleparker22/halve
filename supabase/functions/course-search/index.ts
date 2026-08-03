@@ -158,9 +158,30 @@ Deno.serve(async (request: Request) => {
     .ilike('name', `%${term}%`)
     .limit(20);
 
-  // The cache is the hot path. Only reach for the provider when it comes up short.
-  if ((local.data?.length ?? 0) >= 5 || !providerKey) {
-    return json({ courses: local.data ?? [], source: providerKey ? 'cache' : 'cache-only' });
+  if (!providerKey) {
+    return json({ courses: local.data ?? [], source: 'cache-only' });
+  }
+
+  /**
+   * The cache is the hot path, and "have we asked this before?" is the only
+   * question that answers reliably. Counting local matches does not: a search
+   * for one specific course legitimately returns one row, and treating that as
+   * a cache miss sends every such search to the provider forever.
+   *
+   * A term is re-asked at most monthly, so new courses still appear eventually.
+   * Negative results are remembered too — a course the provider does not have
+   * would otherwise be re-queried on every search.
+   */
+  const cacheKey = term.toLowerCase();
+  const { data: seen } = await admin
+    .from('course_search_log')
+    .select('searched_at')
+    .eq('term', cacheKey)
+    .maybeSingle();
+
+  const FRESH_MS = 30 * 24 * 60 * 60 * 1000;
+  if (seen && Date.now() - new Date(seen.searched_at).getTime() < FRESH_MS) {
+    return json({ courses: local.data ?? [], source: 'cache' });
   }
 
   let fetched: NormalisedCourse[] = [];
@@ -231,11 +252,17 @@ Deno.serve(async (request: Request) => {
     }
   }
 
+  // Record the term even when the provider returned nothing, so a course it
+  // does not carry is asked for once a month rather than on every search.
+  await admin
+    .from('course_search_log')
+    .upsert({ term: cacheKey, hits: fetched.length, searched_at: new Date().toISOString() });
+
   const merged = await admin
     .from('courses')
     .select('id, name, city, state, needs_review')
     .ilike('name', `%${term}%`)
     .limit(20);
 
-  return json({ courses: merged.data ?? [], source: fetched.length ? 'provider' : 'cache' });
+  return json({ courses: merged.data ?? [], source: 'provider' });
 });
