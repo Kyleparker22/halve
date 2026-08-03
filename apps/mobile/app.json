@@ -96,7 +96,6 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Bagdrop shows how far you are from the green while you are playing. It only uses your location while the scorecard is open.",
           "locationWhenInUsePermission": "Bagdrop shows how far you are from the green while you are playing. It only uses your location while the scorecard is open.",
           "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": false
