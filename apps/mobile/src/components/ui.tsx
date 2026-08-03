@@ -41,9 +41,26 @@ export function Screen({
   );
 }
 
-export function Title({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
+export function Title({
+  children,
+  style,
+  onPress,
+}: {
+  children: ReactNode;
+  style?: StyleProp<TextStyle>;
+  onPress?: () => void;
+}) {
   const theme = useTheme();
-  return <Text style={[typeScale.title, { color: theme.text }, style]}>{children}</Text>;
+  return (
+    <Text
+      style={[typeScale.title, { color: theme.text }, style]}
+      onPress={onPress}
+      // A tappable title is not obviously tappable, so tell the screen reader.
+      accessibilityRole={onPress ? 'link' : undefined}
+    >
+      {children}
+    </Text>
+  );
 }
 
 export function Heading({ children }: { children: ReactNode }) {

@@ -39,7 +39,9 @@ export default function RoundScreen() {
 
   return (
     <Screen>
-      <Title>{courseName}</Title>
+      <Title onPress={() => round.course_id && router.push(`/course/${round.course_id}`)}>
+        {courseName}
+      </Title>
       <Small>
         {new Date(round.scheduled_at).toLocaleString(undefined, { timeZone: round.timezone })} ·{' '}
         {round.hole_count} holes{teeName ? ` · ${teeName} tees` : ''}

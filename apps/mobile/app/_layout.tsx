@@ -76,6 +76,7 @@ function RootNavigator() {
         <Stack.Screen name="crew/[id]/settle" options={{ title: 'Settle up' }} />
         <Stack.Screen name="crew/[id]/guests" options={{ title: 'Guests' }} />
         <Stack.Screen name="course/new" options={{ title: 'Add a course' }} />
+        <Stack.Screen name="course/[id]/index" options={{ title: 'Course' }} />
         <Stack.Screen name="course/[id]/card" options={{ title: 'Fix the card' }} />
         <Stack.Screen name="round/new" options={{ title: 'Schedule a round' }} />
         <Stack.Screen name="round/[id]/index" options={{ title: 'Round' }} />
