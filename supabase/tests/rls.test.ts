@@ -97,7 +97,11 @@ describe('a non-member gets zero rows', () => {
     ['trip_expenses', `select id from trip_expenses`],
     ['trip_expense_shares', `select * from trip_expense_shares`],
     ['messages', `select id from messages`],
-    ['feed_items', `select id from feed_items`],
+    // Scoped to the Saturday crew like `crews` above: Priya legitimately sees
+    // her own crew's feed, and the seed now produces feed items for College
+    // Buddies because adding a member is itself a feed event.
+    ['feed_items', `select id from feed_items where crew_id = '${SEED.crewSaturday}'`],
+    ['feed_comments', `select id from feed_comments`],
     ['crew_guests', `select id from crew_guests`],
   ];
 

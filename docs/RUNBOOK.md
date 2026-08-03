@@ -85,6 +85,48 @@ In order, because each step rules out everything below it:
    registered. Simulators never register; `registerDevice` returns early on
    anything that is not a physical device.
 
+## Sentry
+
+The code is wired and reports nothing until a DSN exists. Three steps, once.
+
+### 1. Create the project
+
+sentry.io → new project → **React Native**. Note the org slug and project slug
+from the URL: `sentry.io/organizations/<org>/projects/<project>/`.
+
+### 2. Point the build at it
+
+`app.json` carries the org and project for source map upload. They currently
+read `halve` / `halve-mobile`, which were guesses — if they do not match the
+real slugs, the build still succeeds and every stack trace arrives minified,
+which is the failure mode you notice six weeks later while reading a crash you
+cannot decipher.
+
+```bash
+# From apps/mobile. The DSN is not a secret — it only accepts events.
+eas env:create --name EXPO_PUBLIC_SENTRY_DSN --value "<dsn>" --environment production --visibility plaintext
+```
+
+### 3. Turn source map upload back on
+
+Uploading needs an auth token, and without one the build fails outright — which
+is why `SENTRY_DISABLE_AUTO_UPLOAD=true` is set. Create a token in Sentry
+(Settings → Auth Tokens, scope `project:releases`), then:
+
+```bash
+eas env:create --name SENTRY_AUTH_TOKEN --value "<token>" --environment production --visibility secret
+eas env:delete --variable-name SENTRY_DISABLE_AUTO_UPLOAD --environment production
+```
+
+Leave `SENTRY_DISABLE_AUTO_UPLOAD` in place if you would rather ship without
+readable stack traces for now — reports still arrive, they are just minified.
+
+### Checking it works
+
+`initTelemetry()` is a no-op without a DSN, so nothing breaks in the meantime.
+Once set, the fastest confirmation is to sign in and force any error; queries
+and mutations report themselves, so a failed settle shows up within a minute.
+
 ## Before a public App Store listing
 
 Two pages must be live and reachable. The app links to them from Profile, and

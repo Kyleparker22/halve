@@ -256,6 +256,45 @@ export type Database = {
           },
         ]
       }
+      feed_comments: {
+        Row: {
+          body: string
+          created_at: string | null
+          feed_item_id: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          feed_item_id: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          feed_item_id?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_comments_feed_item_id_fkey"
+            columns: ["feed_item_id"]
+            isOneToOne: false
+            referencedRelation: "feed_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_comments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feed_items: {
         Row: {
           actor_id: string | null

@@ -62,23 +62,56 @@ export function useApproveSeat(roundId: string) {
   });
 }
 
+export interface FeedEntry extends FeedItemRow {
+  actor: ProfileRow | null;
+  /** Emoji → who reacted with it, so the UI can show counts and my own state. */
+  reactions: Record<string, string[]>;
+  commentCount: number;
+}
+
 export function useFeed(crewId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.feed(crewId ?? 'none'),
     enabled: Boolean(crewId),
-    queryFn: async (): Promise<Array<FeedItemRow & { actor: ProfileRow | null }>> => {
+    queryFn: async (): Promise<FeedEntry[]> => {
       const { data, error } = await supabase
         .from('feed_items')
-        .select('*, actor:profiles(*)')
+        .select(
+          '*, actor:profiles(*), reactions(emoji, profile_id), feed_comments(id)',
+        )
         .eq('crew_id', crewId!)
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw error;
-      return (data ?? []) as unknown as Array<FeedItemRow & { actor: ProfileRow | null }>;
+
+      return (
+        (data ?? []) as unknown as Array<
+          FeedItemRow & {
+            actor: ProfileRow | null;
+            reactions: Array<{ emoji: string; profile_id: string }>;
+            feed_comments: Array<{ id: string }>;
+          }
+        >
+      ).map((row) => {
+        const reactions: Record<string, string[]> = {};
+        for (const reaction of row.reactions ?? []) {
+          (reactions[reaction.emoji] ??= []).push(reaction.profile_id);
+        }
+        return {
+          ...row,
+          reactions,
+          commentCount: (row.feed_comments ?? []).length,
+        };
+      });
     },
   });
 }
 
+/**
+ * Toggling, not adding. The primary key is (item, profile, emoji), so a plain
+ * upsert made a reaction permanent — you could add a laugh and never take it
+ * back, which is not how any feed anyone has used behaves.
+ */
 export function useReact(crewId: string) {
   const client = useQueryClient();
   return useMutation({
@@ -86,17 +119,97 @@ export function useReact(crewId: string) {
       feedItemId,
       profileId,
       emoji,
+      on,
     }: {
       feedItemId: string;
       profileId: string;
       emoji: string;
+      on: boolean;
     }) => {
+      if (on) {
+        const { error } = await supabase
+          .from('reactions')
+          .upsert({ feed_item_id: feedItemId, profile_id: profileId, emoji });
+        if (error) throw error;
+        return;
+      }
       const { error } = await supabase
         .from('reactions')
-        .upsert({ feed_item_id: feedItemId, profile_id: profileId, emoji });
+        .delete()
+        .eq('feed_item_id', feedItemId)
+        .eq('profile_id', profileId)
+        .eq('emoji', emoji);
       if (error) throw error;
     },
     onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.feed(crewId) }),
+  });
+}
+
+export interface FeedComment {
+  id: string;
+  body: string;
+  createdAt: string | null;
+  authorName: string;
+  authorId: string;
+}
+
+export function useComments(feedItemId: string | undefined) {
+  return useQuery({
+    queryKey: ['feed-comments', feedItemId ?? 'none'],
+    enabled: Boolean(feedItemId),
+    queryFn: async (): Promise<FeedComment[]> => {
+      const { data, error } = await supabase
+        .from('feed_comments')
+        .select('id, body, created_at, profile_id, profiles(display_name)')
+        .eq('feed_item_id', feedItemId!)
+        .order('created_at');
+      if (error) throw error;
+      return (
+        (data ?? []) as unknown as Array<{
+          id: string;
+          body: string;
+          created_at: string | null;
+          profile_id: string;
+          profiles: { display_name: string } | null;
+        }>
+      ).map((row) => ({
+        id: row.id,
+        body: row.body,
+        createdAt: row.created_at,
+        authorName: row.profiles?.display_name ?? 'Someone',
+        authorId: row.profile_id,
+      }));
+    },
+  });
+}
+
+export function useAddComment(crewId: string, feedItemId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ profileId, body }: { profileId: string; body: string }) => {
+      const trimmed = body.trim();
+      if (trimmed.length === 0) return;
+      const { error } = await supabase
+        .from('feed_comments')
+        .insert({ feed_item_id: feedItemId, profile_id: profileId, body: trimmed });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['feed-comments', feedItemId] });
+      void client.invalidateQueries({ queryKey: queryKeys.feed(crewId) });
+    },
+  });
+}
+
+/** Your own only — the policy enforces it, this just does not offer the rest. */
+export function useDeleteComment(feedItemId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (commentId: string) => {
+      const { error } = await supabase.from('feed_comments').delete().eq('id', commentId);
+      if (error) throw error;
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: ['feed-comments', feedItemId] }),
   });
 }
 

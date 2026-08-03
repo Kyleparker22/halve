@@ -19,6 +19,7 @@ import { useCrewBalances } from '../../../src/hooks/useBalances';
 import { useFeed } from '../../../src/hooks/useSocial';
 import { useRounds } from '../../../src/hooks/useRounds';
 import { useSession } from '../../../src/hooks/useSession';
+import { describeFeedItem } from '../../../src/components/FeedItem';
 
 export default function CrewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -117,31 +118,33 @@ export default function CrewScreen() {
         onPress={() => router.push(`/chat/crew/${id}`)}
       />
 
-      {(feed.data ?? []).length > 0 ? (
-        <Card>
+      <Card>
+        <Row justify="space-between">
           <Heading>Recent</Heading>
-          {(feed.data ?? []).slice(0, 10).map((item) => (
-            <Row key={item.id} justify="space-between">
-              <Body numberOfLines={1}>{describe(item.type, item.payload)}</Body>
-              <Small>{new Date(item.created_at ?? '').toLocaleDateString()}</Small>
-            </Row>
-          ))}
-        </Card>
-      ) : null}
+          <Button
+            title="See all"
+            variant="secondary"
+            onPress={() => router.push(`/crew/${id}/feed`)}
+          />
+        </Row>
+        {(feed.data ?? []).length === 0 ? (
+          <Small>
+            Rounds, trips, people joining and money settling all show up here as they happen.
+          </Small>
+        ) : (
+          (feed.data ?? [])
+            .slice(0, 5)
+            .map((item) => (
+              <Row key={item.id} justify="space-between">
+                <Body numberOfLines={1}>
+                  {describeFeedItem(item.type, item.payload, item.actor?.display_name ?? null)}
+                </Body>
+                <Small>{new Date(item.created_at ?? '').toLocaleDateString()}</Small>
+              </Row>
+            ))
+        )}
+      </Card>
+
     </Screen>
   );
-}
-
-function describe(type: string, payload: unknown): string {
-  const data = (payload ?? {}) as Record<string, unknown>;
-  switch (type) {
-    case 'round_completed':
-      return `Round at ${String(data.course ?? 'the course')}`;
-    case 'trip_created':
-      return `Trip: ${String(data.name ?? 'somewhere good')}`;
-    case 'settlement_confirmed':
-      return 'Settled up';
-    default:
-      return type.replace(/_/g, ' ');
-  }
 }
