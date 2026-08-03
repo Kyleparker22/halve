@@ -152,6 +152,11 @@ export default function TripScreen() {
       <Button title="Expenses" onPress={() => router.push(`/trip/${id}/expenses`)} />
       <Button title="Trip money" onPress={() => router.push(`/trip/${id}/settle`)} />
       <Button
+        title="Recap"
+        variant="secondary"
+        onPress={() => router.push(`/trip/${id}/recap`)}
+      />
+      <Button
         title="Trip chat"
         variant="secondary"
         onPress={() => router.push(`/chat/trip/${id}`)}

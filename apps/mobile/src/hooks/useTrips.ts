@@ -418,6 +418,119 @@ export function useReceiptUrl(path: string | null | undefined) {
   });
 }
 
+export interface TripStanding {
+  key: string;
+  name: string;
+  isGuest: boolean;
+  roundsPlayed: number;
+  grossTotal: number;
+  netTotal: number;
+  /** Best single round of the trip, gross. */
+  bestGross: number | null;
+  bestRoundId: string | null;
+}
+
+export interface TripRecap {
+  standings: TripStanding[];
+  lowRound: { name: string; strokes: number; roundId: string } | null;
+  roundsPlayed: number;
+}
+
+/**
+ * Standings across a trip's rounds.
+ *
+ * Only rounds that are actually finished count. A trip in progress otherwise
+ * shows whoever teed off first as the runaway leader, because a player with
+ * three holes scored has a lower total than one who has played eighteen.
+ *
+ * People are keyed by profile or guest id rather than round_player id — the
+ * whole point is that one person's four rounds add up, and they are a different
+ * round_player on each of them.
+ */
+export function useTripRecap(tripId: string | undefined) {
+  return useQuery({
+    queryKey: ['trip', tripId ?? 'none', 'recap'],
+    enabled: Boolean(tripId),
+    queryFn: async (): Promise<TripRecap> => {
+      const { data: rounds } = await supabase
+        .from('rounds')
+        .select('id, hole_count, status')
+        .eq('trip_id', tripId!);
+
+      const finished = (rounds ?? []).filter((r) => r.status === 'completed');
+      if (finished.length === 0) return { standings: [], lowRound: null, roundsPlayed: 0 };
+
+      const { data: players, error } = await supabase
+        .from('round_players')
+        .select(
+          'id, round_id, profile_id, guest_id, playing_handicap, profiles(display_name), crew_guests(name), scores(strokes)',
+        )
+        .in(
+          'round_id',
+          finished.map((r) => r.id),
+        );
+      if (error) throw error;
+
+      const byPerson = new Map<string, TripStanding>();
+      let lowRound: TripRecap['lowRound'] = null;
+
+      for (const row of (players ?? []) as unknown as Array<{
+        id: string;
+        round_id: string;
+        profile_id: string | null;
+        guest_id: string | null;
+        playing_handicap: number | null;
+        profiles: { display_name: string } | null;
+        crew_guests: { name: string } | null;
+        scores: Array<{ strokes: number | null }>;
+      }>) {
+        const holesScored = row.scores.filter((s) => s.strokes !== null);
+        // A card that was never filled in is not a round played.
+        if (holesScored.length === 0) continue;
+
+        const gross = holesScored.reduce((sum, s) => sum + (s.strokes ?? 0), 0);
+        const net = gross - (row.playing_handicap ?? 0);
+        const key = row.profile_id ? `p:${row.profile_id}` : `g:${row.guest_id}`;
+        const name = row.profiles?.display_name ?? row.crew_guests?.name ?? 'Player';
+
+        const current =
+          byPerson.get(key) ??
+          ({
+            key,
+            name,
+            isGuest: row.guest_id !== null,
+            roundsPlayed: 0,
+            grossTotal: 0,
+            netTotal: 0,
+            bestGross: null,
+            bestRoundId: null,
+          } satisfies TripStanding);
+
+        current.roundsPlayed += 1;
+        current.grossTotal += gross;
+        current.netTotal += net;
+        if (current.bestGross === null || gross < current.bestGross) {
+          current.bestGross = gross;
+          current.bestRoundId = row.round_id;
+        }
+        byPerson.set(key, current);
+
+        if (!lowRound || gross < lowRound.strokes) {
+          lowRound = { name, strokes: gross, roundId: row.round_id };
+        }
+      }
+
+      return {
+        standings: [...byPerson.values()].sort(
+          (a, b) => a.netTotal - b.netTotal || a.name.localeCompare(b.name),
+        ),
+        lowRound,
+        roundsPlayed: finished.length,
+      };
+    },
+  });
+}
+
 export function useJoinTrip() {
   const client = useQueryClient();
   return useMutation({
