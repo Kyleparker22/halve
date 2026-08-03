@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fixIsUsable, metresBetween, yardagesTo, yardsBetween } from './geo';
+import { bearingBetween, fixIsUsable, metresBetween, yardagesTo, yardsBetween } from './geo';
 
 describe('distance', () => {
   it('is zero at the same point', () => {
@@ -74,5 +74,22 @@ describe('fix quality', () => {
   it('rejects a missing accuracy reading rather than assuming it is fine', () => {
     expect(fixIsUsable(null)).toBe(false);
     expect(fixIsUsable(undefined)).toBe(false);
+  });
+});
+
+describe('bearing', () => {
+  it('points north, east, south and west', () => {
+    const origin = { lat: 0, lng: 0 };
+    expect(bearingBetween(origin, { lat: 1, lng: 0 })).toBeCloseTo(0, 1);
+    expect(bearingBetween(origin, { lat: 0, lng: 1 })).toBeCloseTo(90, 1);
+    expect(bearingBetween(origin, { lat: -1, lng: 0 })).toBeCloseTo(180, 1);
+    expect(bearingBetween(origin, { lat: 0, lng: -1 })).toBeCloseTo(270, 1);
+  });
+
+  it('never returns a negative bearing', () => {
+    // The naive atan2 form gives -90 here; a compass has no such thing.
+    const b = bearingBetween({ lat: 28.08, lng: -82.76 }, { lat: 28.08, lng: -82.77 });
+    expect(b).toBeGreaterThanOrEqual(0);
+    expect(b).toBeLessThan(360);
   });
 });

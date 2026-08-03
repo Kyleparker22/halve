@@ -7,7 +7,10 @@ import {
   usePosition,
   useSetGreenPoint,
 } from '../hooks/useGps';
-import { yardagesTo } from '../lib/geo';
+import { bearingBetween, yardagesTo } from '../lib/geo';
+import { playsLike, recommendClub } from '../lib/clubs';
+import { useClubs, useWeather } from '../hooks/useClubs';
+import { useSession } from '../hooks/useSession';
 import { spacing, useTheme } from '../theme';
 
 interface Props {
@@ -29,6 +32,11 @@ export function Yardage({ courseId, holeNumber }: Props) {
   const importGps = useImportCourseGps(courseId ?? undefined);
   const setGreen = useSetGreenPoint(courseId ?? '');
   const fix = usePosition(on);
+  const { session } = useSession();
+  const clubs = useClubs(session?.user.id);
+  // Weather is a refinement, not a dependency — a null here degrades the
+  // recommendation to raw distance rather than blocking it.
+  const weather = useWeather(on ? fix.point : null);
 
   if (!courseId) return null;
 
@@ -132,6 +140,21 @@ export function Yardage({ courseId, holeNumber }: Props) {
 
   const y = yardagesTo(fix.point, { front: hole.front, centre: hole.green, back: hole.back });
 
+  /**
+   * Club selection is about the centre, and about what the shot *plays* rather
+   * than what the GPS measures. Wind needs the shot's bearing to be usable at
+   * all — a speed with no direction relative to the target is not information.
+   */
+  const bearing = bearingBetween(fix.point, hole.green);
+  const adjusted = playsLike(y.centre, {
+    windMph: weather.data?.windMph,
+    windFromDeg: weather.data?.windFromDeg,
+    shotBearingDeg: bearing,
+    tempC: weather.data?.tempC,
+    altitudeM: weather.data?.altitudeM,
+  });
+  const suggestion = recommendClub(clubs.data ?? [], adjusted.playsLike);
+
   return (
     <Card>
       <Row justify="space-between" align="flex-end">
@@ -153,6 +176,50 @@ export function Yardage({ courseId, holeNumber }: Props) {
           </Body>
         </View>
       </Row>
+
+      {suggestion ? (
+        <>
+          <Row justify="space-between" align="flex-end">
+            <View>
+              <Small>Plays like</Small>
+              <Body style={{ fontSize: 22, fontWeight: '700', color: theme.text }}>
+                {adjusted.playsLike}
+              </Body>
+            </View>
+            <View>
+              <Small>
+                Club{suggestion.slackYards !== 0
+                  ? ` · ${Math.abs(suggestion.slackYards)} ${suggestion.slackYards > 0 ? 'to spare' : 'short'}`
+                  : ''}
+              </Small>
+              <Body style={{ fontSize: 28, fontWeight: '800', color: theme.win }}>
+                {suggestion.club.name}
+              </Body>
+            </View>
+          </Row>
+          {/* The reasoning, always. "7 iron" on its own is a number to distrust;
+              "152 plays 158 — 6 into the wind, 12 ft uphill" is one a golfer can
+              disagree with, which is the point. */}
+          {adjusted.adjustments.length > 0 ? (
+            <Small>
+              {adjusted.adjustments
+                .map((a) => `${a.label} ${a.yards > 0 ? '+' : ''}${a.yards}`)
+                .join(' · ')}
+            </Small>
+          ) : (
+            <Small>No conditions data — off the raw number.</Small>
+          )}
+          {suggestion.alternatives.length > 0 ? (
+            <Small>
+              Either side: {suggestion.alternatives.map((c) => `${c.name} ${c.carryYards}`).join(' · ')}
+            </Small>
+          ) : null}
+        </>
+      ) : (
+        <Small>
+          Add your club distances in Profile and Bagdrop will suggest one from here.
+        </Small>
+      )}
 
       <Row justify="space-between">
         <Small>

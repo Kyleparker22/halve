@@ -918,6 +918,41 @@ export type Database = {
           },
         ]
       }
+      player_clubs: {
+        Row: {
+          carry_yards: number
+          created_at: string | null
+          id: string
+          name: string
+          position: number
+          profile_id: string
+        }
+        Insert: {
+          carry_yards: number
+          created_at?: string | null
+          id?: string
+          name: string
+          position?: number
+          profile_id: string
+        }
+        Update: {
+          carry_yards?: number
+          created_at?: string | null
+          id?: string
+          name?: string
+          position?: number
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_clubs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

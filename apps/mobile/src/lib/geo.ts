@@ -74,3 +74,18 @@ export const ACCURACY_LIMIT_M = 25;
 export function fixIsUsable(accuracyMetres: number | null | undefined): boolean {
   return typeof accuracyMetres === 'number' && accuracyMetres <= ACCURACY_LIMIT_M;
 }
+
+/**
+ * Bearing from one point to another, degrees clockwise from north.
+ *
+ * Needed to work out how much of the wind is in your face — a wind speed with
+ * no direction relative to the shot is not usable information.
+ */
+export function bearingBetween(from: Point, to: Point): number {
+  const lat1 = toRad(from.lat);
+  const lat2 = toRad(to.lat);
+  const dLng = toRad(to.lng - from.lng);
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  return (((Math.atan2(y, x) * 180) / Math.PI) + 360) % 360;
+}

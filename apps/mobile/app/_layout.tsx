@@ -104,6 +104,7 @@ function RootNavigator() {
         <Stack.Screen name="trip/[id]/recap" options={{ title: 'Trip recap' }} />
         <Stack.Screen name="chat/[scope]/[id]" options={{ title: 'Chat' }} />
         <Stack.Screen name="settings/notifications" options={{ title: 'Notifications' }} />
+        <Stack.Screen name="settings/bag" options={{ title: 'Your bag' }} />
         <Stack.Screen name="seats" options={{ title: 'Open seats' }} />
         <Stack.Screen name="join/[code]" options={{ title: 'Join' }} />
       </Stack>

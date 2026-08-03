@@ -55,6 +55,7 @@ export default function ProfileScreen() {
         variant="secondary"
         onPress={() => router.push('/(auth)/onboarding')}
       />
+      <Button title="Your bag" variant="secondary" onPress={() => router.push('/settings/bag')} />
       <Button
         title="Notification settings"
         variant="secondary"
