@@ -44,7 +44,7 @@ export default function SettleScreen() {
     members.data?.find((m) => m.profileId === profileId)?.profile.handle;
 
   const pending = (settlements.data ?? []).filter((s) => s.status === 'requested');
-  const note = `${crew.data?.name ?? 'Halve'} — settling up`;
+  const note = `${crew.data?.name ?? 'Bagdrop'} — settling up`;
 
   return (
     <Screen>
@@ -148,7 +148,7 @@ export default function SettleScreen() {
       )}
 
       <Small>
-        Halve never holds or moves money. It works out the amount and fills in the payment for you —
+        Bagdrop never holds or moves money. It works out the amount and fills in the payment for you —
         you pay in your own app.
       </Small>
     </Screen>

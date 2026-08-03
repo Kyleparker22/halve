@@ -40,7 +40,7 @@ export default function SignIn() {
   return (
     <Screen>
       <View style={{ gap: spacing.xs, marginTop: spacing.xxl }}>
-        <Title>Halve</Title>
+        <Title>Bagdrop</Title>
         <Body muted>Your crew&apos;s round, card, bets and trip — in one place.</Body>
       </View>
 
@@ -149,7 +149,7 @@ export default function SignIn() {
       ) : null}
 
       <Small>
-        Halve records friendly wagers between people who know each other. It never holds or moves
+        Bagdrop records friendly wagers between people who know each other. It never holds or moves
         money.
       </Small>
     </Screen>

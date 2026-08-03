@@ -101,7 +101,7 @@ export default function ProfileScreen() {
       </Row>
 
       <Small>
-        Halve is a scorekeeping and expense-splitting tool for friends. It never holds or transfers
+        Bagdrop is a scorekeeping and expense-splitting tool for friends. It never holds or transfers
         money.
       </Small>
       {/* Support asks "what build are you on?" before anything else. */}

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Halve",
+    "name": "Bagdrop",
     "slug": "halve",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -61,7 +61,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Halve attaches receipt photos to trip expenses, so the crew can see what a shared cost actually was."
+          "photosPermission": "Bagdrop attaches receipt photos to trip expenses, so the crew can see what a shared cost actually was."
         }
       ],
       [

@@ -22,7 +22,7 @@ appId: golf.halve.app
 # Keychain, which survives an app data wipe. So sign-in is conditional on
 # actually landing on the sign-in screen.
 - extendedWaitUntil:
-    visible: '.*Halve.*'
+    visible: '.*Bagdrop.*'
     timeout: 120000
 
 - runFlow:

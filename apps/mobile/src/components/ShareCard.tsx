@@ -119,7 +119,7 @@ export function ShareCard({ courseName, dateLabel, money, headline, leaderboard 
 
           {/* The only marketing in the whole app, and it goes out on an image
               somebody chose to send to their friends. */}
-          <Small>Halve · halve.golf</Small>
+          <Small>Bagdrop</Small>
         </View>
       </ViewShot>
 

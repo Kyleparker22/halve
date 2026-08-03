@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """
-Generates the app icon, adaptive icon and splash mark.
+Generates the app icon, adaptive icon and splash mark for Bagdrop.
 
 Checked in so the mark can be adjusted without a design tool round trip. It is
-not a substitute for a designer — it is a real icon instead of Expo's default,
-which is what shipped until now.
+not a substitute for a designer — it is a real icon instead of Expo's default.
 
-The mark: a golf ball split down the middle, one half bone and one half flag
-orange. It is the name and the product in one shape — two people, one round,
-the money split between them — and it stays legible at 40 points, which a
-detailed ball with dimples does not.
+The mark: a luggage tag whose punch hole is the cup. Bagdrop is the airport
+term and the golf term at once — the moment you pull up, unload, and find your
+group — and the tag carries both halves in one shape. The orange hole is the
+only detail, because at 40 points a detail is all you get.
 
     python3 scripts/make-icons.py
 """
@@ -21,31 +20,45 @@ BONE = (246, 244, 239)      # #F6F4EF
 FLAG = (228, 87, 46)        # #E4572E
 
 SIZE = 1024
-SS = 4  # supersample factor; Pillow has no antialiased draw, so draw big and shrink
+SS = 4  # supersample; Pillow does not antialias its draw primitives
 
 
-def draw_mark(canvas_size: int, diameter: int, background=None) -> Image.Image:
-    """The split ball, centred. Transparent background unless one is given."""
-    big = canvas_size * SS
-    image = Image.new("RGBA", (big, big), (*background, 255) if background else (0, 0, 0, 0))
+def draw_mark(canvas: int, width: int, background=None) -> Image.Image:
+    """The tag, centred. Transparent background unless one is given."""
+    big = canvas * SS
+    fill = (*background, 255) if background else (0, 0, 0, 0)
+    image = Image.new("RGBA", (big, big), fill)
     draw = ImageDraw.Draw(image)
 
-    d = diameter * SS
-    left = (big - d) // 2
-    top = (big - d) // 2
-    box = [left, top, left + d, top + d]
+    w = width * SS
+    h = int(w * 0.62)
+    left = (big - w) // 2
+    top = (big - h) // 2
+    right, bottom = left + w, top + h
 
-    # Two half discs with a gap between them. The gap is what makes it read as
-    # halved rather than as a two-tone circle.
-    gap = max(2, d // 28)
-    draw.pieslice(box, start=90, end=270, fill=BONE)          # left half
-    draw.pieslice(box, start=-90, end=90, fill=FLAG)          # right half
-    draw.rectangle(
-        [left + d // 2 - gap // 2, top - 1, left + d // 2 + gap // 2, top + d + 1],
-        fill=(*background, 255) if background else (0, 0, 0, 0),
+    radius = int(h * 0.20)
+    point = int(w * 0.30)   # how far the angled end reaches in
+
+    # Body: rounded on the right, squared off on the left. The squaring matters
+    # — the taper has to run off a sharp corner. Leave those corners rounded and
+    # the diagonal overshoots them, leaving a nub at each end; move the taper
+    # inboard to avoid the nub and you get a flat edge that reads as a wallet.
+    draw.rounded_rectangle([left + point, top, right, bottom], radius=radius, fill=BONE)
+    draw.rectangle([left + point, top, left + point + radius, bottom], fill=BONE)
+    draw.polygon(
+        [(left, top + h // 2), (left + point, top), (left + point, bottom)],
+        fill=BONE,
     )
 
-    return image.resize((canvas_size, canvas_size), Image.LANCZOS)
+    # The punch hole, which is also the cup. The only detail in the mark.
+    hole_r = int(h * 0.16)
+    hole_cx = left + point - int(h * 0.06)
+    draw.ellipse(
+        [hole_cx - hole_r, top + h // 2 - hole_r, hole_cx + hole_r, top + h // 2 + hole_r],
+        fill=FLAG,
+    )
+
+    return image.resize((canvas, canvas), Image.LANCZOS)
 
 
 def flatten(image: Image.Image, background) -> Image.Image:
@@ -58,22 +71,18 @@ def flatten(image: Image.Image, background) -> Image.Image:
 def main() -> None:
     out = "apps/mobile/assets"
 
-    # iOS/Android store icon. Full bleed, square, no alpha, no rounded corners —
-    # the platforms mask it themselves and baking a radius in looks wrong.
-    icon = draw_mark(SIZE, int(SIZE * 0.62), background=FAIRWAY)
-    flatten(icon, FAIRWAY).save(f"{out}/icon.png")
+    # Store icon. Full bleed, square, no alpha, no rounded corners — the
+    # platforms mask it themselves and baking a radius in looks wrong.
+    flatten(draw_mark(SIZE, int(SIZE * 0.66), background=FAIRWAY), FAIRWAY).save(f"{out}/icon.png")
 
     # Android adaptive foreground. The outer ~25% is cropped by whichever mask
     # the launcher applies, so the mark has to sit well inside it.
-    adaptive = draw_mark(SIZE, int(SIZE * 0.44))
-    adaptive.save(f"{out}/adaptive-icon.png")
+    draw_mark(SIZE, int(SIZE * 0.48)).save(f"{out}/adaptive-icon.png")
 
-    # Splash. Transparent, sits on the fairway background set in app.json.
-    splash = draw_mark(SIZE, int(SIZE * 0.40))
-    splash.save(f"{out}/splash-icon.png")
+    # Splash. Transparent, on the background set in app.json.
+    draw_mark(SIZE, int(SIZE * 0.46)).save(f"{out}/splash-icon.png")
 
-    favicon = draw_mark(64, 40, background=FAIRWAY)
-    flatten(favicon, FAIRWAY).save(f"{out}/favicon.png")
+    flatten(draw_mark(64, 44, background=FAIRWAY), FAIRWAY).save(f"{out}/favicon.png")
 
     print("wrote icon.png, adaptive-icon.png, splash-icon.png, favicon.png")
 

@@ -15,7 +15,7 @@ appId: golf.halve.app
 - launchApp
 
 - extendedWaitUntil:
-    visible: '.*Halve.*'
+    visible: '.*Bagdrop.*'
     timeout: 120000
 
 - runFlow:
