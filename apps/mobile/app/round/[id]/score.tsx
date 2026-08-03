@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { WolfConfig } from '@halve/games';
 import { WolfPicker } from '../../../src/components/WolfPicker';
+import { Yardage } from '../../../src/components/Yardage';
 import {
   Body,
   Button,
@@ -64,6 +65,10 @@ export default function ScoreScreen() {
             <Small>Full card</Small>
           </Pressable>
         </Row>
+
+        {/* Directly under the hole header — where someone standing in the
+            fairway looks first. */}
+        <Yardage courseId={bundle.data.round.course_id} holeNumber={hole.number} />
 
         {card.lastConflict ? (
           <Pressable onPress={card.dismissConflict}>

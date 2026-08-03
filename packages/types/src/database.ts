@@ -109,6 +109,8 @@ export type Database = {
           country: string | null
           created_at: string | null
           external_id: string | null
+          gps_checked_at: string | null
+          gps_source: string | null
           hole_count: number
           id: string
           lat: number | null
@@ -126,6 +128,8 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           external_id?: string | null
+          gps_checked_at?: string | null
+          gps_source?: string | null
           hole_count?: number
           id?: string
           lat?: number | null
@@ -143,6 +147,8 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           external_id?: string | null
+          gps_checked_at?: string | null
+          gps_source?: string | null
           hole_count?: number
           id?: string
           lat?: number | null
@@ -553,6 +559,65 @@ export type Database = {
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hole_points: {
+        Row: {
+          course_id: string
+          external_ref: string | null
+          green_back_lat: number | null
+          green_back_lng: number | null
+          green_front_lat: number | null
+          green_front_lng: number | null
+          green_lat: number
+          green_lng: number
+          hole_number: number
+          id: string
+          source: string
+          tee_lat: number | null
+          tee_lng: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          course_id: string
+          external_ref?: string | null
+          green_back_lat?: number | null
+          green_back_lng?: number | null
+          green_front_lat?: number | null
+          green_front_lng?: number | null
+          green_lat: number
+          green_lng: number
+          hole_number: number
+          id?: string
+          source: string
+          tee_lat?: number | null
+          tee_lng?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          course_id?: string
+          external_ref?: string | null
+          green_back_lat?: number | null
+          green_back_lng?: number | null
+          green_front_lat?: number | null
+          green_front_lng?: number | null
+          green_lat?: number
+          green_lng?: number
+          hole_number?: number
+          id?: string
+          source?: string
+          tee_lat?: number | null
+          tee_lng?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hole_points_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
             referencedColumns: ["id"]
           },
         ]
@@ -1879,6 +1944,36 @@ export type Database = {
       }
       queue_round_reminders: { Args: never; Returns: undefined }
       request_open_seat: { Args: { p_round_id: string }; Returns: string }
+      set_green_point: {
+        Args: {
+          p_course_id: string
+          p_hole: number
+          p_lat: number
+          p_lng: number
+        }
+        Returns: {
+          course_id: string
+          external_ref: string | null
+          green_back_lat: number | null
+          green_back_lng: number | null
+          green_front_lat: number | null
+          green_front_lng: number | null
+          green_lat: number
+          green_lng: number
+          hole_number: number
+          id: string
+          source: string
+          tee_lat: number | null
+          tee_lng: number | null
+          updated_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "hole_points"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_push_dispatch_secret: { Args: { p_secret: string }; Returns: string }
       split_expense_evenly: {
         Args: { p_expense_id: string; p_member_ids: string[] }
