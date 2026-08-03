@@ -105,23 +105,22 @@ export function useCrewGuests(crewId: string | undefined) {
   });
 }
 
+/**
+ * Goes through create_crew() rather than a plain insert. A direct insert with
+ * `returning` fails RLS — the read policy needs a membership row that does not
+ * exist until after the crew does — and the crew and its owner row have to be
+ * created atomically or an orphan crew is possible. See migration 0006.
+ */
 export function useCreateCrew() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async ({ name, profileId }: { name: string; profileId: string }) => {
-      const { data, error } = await supabase
-        .from('crews')
-        .insert({ name, invite_code: inviteCode(), created_by: profileId })
-        .select()
-        .single();
+    mutationFn: async ({ name }: { name: string; profileId?: string }) => {
+      const { data, error } = await supabase.rpc('create_crew', {
+        p_name: name,
+        p_invite_code: inviteCode(),
+      });
       if (error) throw error;
-
-      const { error: memberError } = await supabase
-        .from('crew_members')
-        .insert({ crew_id: data.id, profile_id: profileId, role: 'owner' });
-      if (memberError) throw memberError;
-
-      return data;
+      return { id: data as string };
     },
     onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.crews }),
   });

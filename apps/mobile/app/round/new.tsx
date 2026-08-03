@@ -43,14 +43,21 @@ export default function NewRoundScreen() {
   const toggle = (list: string[], value: string) =>
     list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 
+  const schedulable = (crews.data ?? []).filter(
+    (crew) => crew.role === 'owner' || crew.role === 'admin',
+  );
+
   return (
     <Screen>
       <Title>Schedule a round</Title>
 
       <Card>
         <Heading>Crew</Heading>
+        {/* Only admins can schedule — the RLS policy enforces it, so offering
+            the choice to a plain member just produces a database error at
+            submit. Show the crews they can actually schedule for. */}
         <Row wrap gap={spacing.sm}>
-          {(crews.data ?? []).map((crew) => (
+          {schedulable.map((crew) => (
             <Pressable key={crew.id} onPress={() => setCrewId(crew.id)}>
               <Body style={{ color: crewId === crew.id ? theme.accent : theme.text }}>
                 {crew.name}
@@ -58,6 +65,12 @@ export default function NewRoundScreen() {
             </Pressable>
           ))}
         </Row>
+        {crews.data && schedulable.length === 0 ? (
+          <Small>
+            Scheduling is an admin job. Ask an owner or admin of your crew to set the round up, or
+            start a crew of your own.
+          </Small>
+        ) : null}
       </Card>
 
       <Card>

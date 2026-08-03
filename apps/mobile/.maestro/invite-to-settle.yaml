@@ -29,12 +29,18 @@ appId: golf.halve.app
     when:
       visible: '.*Development sign-in.*'
     commands:
+      # The keyboard covers the lower half of the screen: without dismissing
+      # it, a tap aimed at the next field lands on a key instead.
       - tapOn:
           id: 'dev-email'
       - inputText: 'maestro@example.com'
+      # hideKeyboard is unsupported here; the screens use
+      # keyboardShouldPersistTaps="handled", so tapping static text dismisses it.
+      - tapOn: '.*Never shipped.*'
       - tapOn:
           id: 'dev-password'
       - inputText: 'maestro-e2e-password'
+      - tapOn: '.*Never shipped.*'
       - tapOn: 'Sign in \(dev\)'
       # A first run creates the account and lands on onboarding.
       - runFlow:
@@ -42,6 +48,13 @@ appId: golf.halve.app
             visible: '.*Set up your profile.*'
           commands:
             - tapOn: 'Start playing'
+
+# iOS offers to save the password after a successful sign-in.
+- runFlow:
+    when:
+      visible: 'Save Password\?'
+    commands:
+      - tapOn: 'Not Now'
 
 - extendedWaitUntil:
     visible: 'Crews'
@@ -53,9 +66,10 @@ appId: golf.halve.app
 - tapOn:
     id: 'join-code'
 - inputText: 'sat4some01'
+- tapOn: '.*Or join with a code.*'
 - tapOn: 'Join'
 - extendedWaitUntil:
-    visible: '.*Saturday Regulars.*'
+    visible: '.*Invite to the crew.*'
     timeout: 30000
 - assertVisible: '.*Your balance.*'
 

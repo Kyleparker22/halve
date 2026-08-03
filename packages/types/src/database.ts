@@ -1552,6 +1552,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_crew: {
+        Args: { p_invite_code: string; p_name: string }
+        Returns: string
+      }
       crew_preview: {
         Args: { p_code: string }
         Returns: {

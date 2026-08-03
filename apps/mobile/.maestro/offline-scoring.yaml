@@ -1,31 +1,94 @@
-# E2E flow 2 (Technical Spec §10): offline scoring survives a force-quit.
+# E2E flow 2 (Technical Spec §10): scores survive the process dying mid-round.
+#
+#   pnpm --filter @halve/mobile e2e
+#
+# Unlike flow 1 this is idempotent: it schedules its own round rather than
+# consuming a seeded one, so it needs no database reset.
 #
 # Scope, stated honestly: Maestro's setAirplaneMode is Android-only, so this
-# flow cannot cut the radio on an iOS simulator. What it does cover on both
-# platforms is the other half of the offline guarantee — that scores are
-# written locally first and survive the process dying mid-round.
-#
-# The radio-off leg lives in offline-scoring.android.yaml.
-# The four-device staggered-reconnect test from the build plan is still manual;
-# no single-device harness can express it.
+# cannot cut the radio on an iOS simulator. It covers the other half of the
+# offline guarantee — local-first writes surviving a force-quit. The radio-off
+# leg is in offline-scoring.android.yaml, and the build plan's four-device
+# staggered-reconnect test remains manual.
 appId: golf.halve.app
 ---
 - launchApp
 
-# A debug build has to bundle before anything renders; launchApp returns
-# well before that, so every cold start needs an explicit wait.
+- extendedWaitUntil:
+    visible: '.*Halve.*'
+    timeout: 120000
+
+- runFlow:
+    when:
+      visible: '.*Development sign-in.*'
+    commands:
+      - tapOn:
+          id: 'dev-email'
+      - inputText: 'maestro@example.com'
+      - tapOn: '.*Never shipped.*'
+      - tapOn:
+          id: 'dev-password'
+      - inputText: 'maestro-e2e-password'
+      - tapOn: '.*Never shipped.*'
+      - tapOn: 'Sign in \(dev\)'
+
+- runFlow:
+    when:
+      visible: 'Save Password\?'
+    commands:
+      - tapOn: 'Not Now'
+
 - extendedWaitUntil:
     visible: 'Crews'
-    timeout: 90000
+    timeout: 60000
 
+# Create a crew of its own. Scheduling is admin-only, and the creator is the
+# owner — joining a seeded crew as a plain member cannot schedule anything.
+- tapOn: 'New crew'
+- tapOn:
+    id: 'crew-name'
+- inputText: 'Maestro Crew'
+- tapOn: '.*Start one.*'
+- tapOn: 'Create crew'
+- extendedWaitUntil:
+    visible: '.*Invite to the crew.*'
+    timeout: 30000
+- tapOn: 'Back'
+
+# Schedule a fresh round. Doing this rather than reusing a seeded one is what
+# makes the flow repeatable.
 - tapOn: 'Rounds, tab.*'
-- tapOn:
-    text: '.*Copperhead.*'
-    index: 0
-- tapOn:
-    text: '.*Open the card.*|.*Start the round.*'
+- extendedWaitUntil:
+    visible: 'Schedule'
+    timeout: 30000
+- tapOn: 'Schedule'
+- extendedWaitUntil:
+    visible: '.*Schedule a round.*'
+    timeout: 30000
 
-# Score five holes.
+- tapOn: '.*Maestro Crew.*'
+- tapOn:
+    id: 'course-search'
+- inputText: 'Copperhead'
+# Tapping static text dismisses the keyboard; hideKeyboard is unsupported here.
+- tapOn: 'Course'
+- tapOn: '.*Palm Harbor.*'
+# The submit button sits below the fold once the roster renders.
+- scrollUntilVisible:
+    element:
+      text: 'Schedule it'
+    direction: DOWN
+- tapOn: 'Schedule it'
+
+- extendedWaitUntil:
+    visible: 'Roster'
+    timeout: 30000
+- tapOn: 'Start the round'
+- extendedWaitUntil:
+    visible: '.*Hole 1.*'
+    timeout: 30000
+
+# Five holes at par. The scorecard writes to MMKV before it writes anywhere else.
 - repeat:
     times: 5
     commands:
@@ -34,31 +97,36 @@ appId: golf.halve.app
           index: 0
       - tapOn: 'Next ▶'
 
-# Kill the app mid-round. Nothing may be lost: the scorecard writes to MMKV
-# before it writes to the network.
+- assertVisible: '.*Hole 6.*'
+
+# Kill the app mid-round.
 - stopApp
 - launchApp
-
-# A debug build has to bundle before anything renders; launchApp returns
-# well before that, so every cold start needs an explicit wait.
 - extendedWaitUntil:
     visible: 'Crews'
-    timeout: 90000
+    timeout: 120000
 
+# The round just created is the soonest upcoming one, so it sorts first.
 - tapOn: 'Rounds, tab.*'
+- extendedWaitUntil:
+    visible: 'Schedule'
+    timeout: 30000
 - tapOn:
     text: '.*Copperhead.*'
     index: 0
-- tapOn:
-    text: '.*Open the card.*|.*Start the round.*'
-- tapOn: '.*Full card.*'
-
-# The five scores are still on the card after the process was killed.
-- assertVisible: '.*Hole.*'
-- assertVisible:
-    text: '.*Par.*'
-
-- back
+- tapOn: '.*Open the card.*|.*Start the round.*'
 - extendedWaitUntil:
-    visible: 'All scores synced'
+    visible: '.*Hole.*'
     timeout: 30000
+
+# Nothing was lost: the five scores are still on the card, and the outbox
+# drained rather than stranding them.
+- tapOn: '.*Full card.*'
+- extendedWaitUntil:
+    visible: '.*Par.*'
+    timeout: 30000
+# Maestro's `back` does not pop this native stack; the header button does.
+- tapOn: 'Back'
+- extendedWaitUntil:
+    visible: '.*All scores synced.*'
+    timeout: 60000
