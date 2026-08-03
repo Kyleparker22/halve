@@ -61,7 +61,9 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Bagdrop attaches receipt photos to trip expenses, so the crew can see what a shared cost actually was."
+          "photosPermission": "Bagdrop attaches photos to trip expenses and to clips you send the broadcast booth.",
+          "cameraPermission": "Bagdrop uses the camera so you can film a shot and send it to the broadcast booth.",
+          "microphonePermission": "Bagdrop records audio with your video clips so the booth has the reaction too."
         }
       ],
       [

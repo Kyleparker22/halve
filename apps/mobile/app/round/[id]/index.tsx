@@ -147,6 +147,14 @@ export default function RoundScreen() {
 
       <Divider />
 
+      <Button title="The booth" onPress={() => router.push(`/round/${id}/booth`)} />
+      {round.status === 'scheduled' ? (
+        <Button
+          title="Give the booth some dirt"
+          variant="secondary"
+          onPress={() => router.push(`/round/${id}/storylines`)}
+        />
+      ) : null}
       <Button
         title="Round chat"
         variant="secondary"
