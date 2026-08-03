@@ -47,15 +47,19 @@ enable_confirmations = false
 enable_signup = true
 enable_confirmations = true
 
-# Apple and Google are the shipping sign-in paths (Apple is mandatory for the
-# App Store once Google exists). Both are off until real credentials exist —
-# enabling a provider with empty secrets just breaks the auth service. Set the
-# env vars, flip these to true, and run `supabase config push`.
+# Native Sign in with Apple verifies the identity token against the app's bundle
+# identifier, so client_id is the bundle id and no secret is needed — that is
+# only required for the web OAuth flow, which this app does not use.
+#
+# This must stay in sync with the dashboard: `supabase config push` overwrites
+# remote auth settings, so leaving it false here would silently disable a
+# provider someone enabled by hand.
 [auth.external.apple]
-enabled = false
-client_id = "env(SUPABASE_AUTH_APPLE_CLIENT_ID)"
-secret = "env(SUPABASE_AUTH_APPLE_SECRET)"
+enabled = true
+client_id = "golf.halve.app"
 
+# Google is off until OAuth credentials exist — enabling a provider with empty
+# secrets breaks the auth service rather than degrading.
 [auth.external.google]
 enabled = false
 client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
