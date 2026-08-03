@@ -18,7 +18,7 @@ import {
 import {
   useBroadcastSegments,
   useCallBooth,
-  useStorylines,
+  useStorylineCount,
   useSubmitClip,
 } from '../../../src/hooks/useBroadcast';
 import { useRoundBundle } from '../../../src/hooks/useRounds';
@@ -32,7 +32,7 @@ export default function BoothScreen() {
   const { session } = useSession();
   const bundle = useRoundBundle(id);
   const segments = useBroadcastSegments(id);
-  const storylines = useStorylines(id);
+  const storylineCount = useStorylineCount(id);
   const submit = useSubmitClip(id);
   const call = useCallBooth(id);
 
@@ -170,7 +170,7 @@ export default function BoothScreen() {
           onPress={() => call.mutate()}
         />
         <Button
-          title={`Storylines${(storylines.data ?? []).length > 0 ? ` (${(storylines.data ?? []).length})` : ''}`}
+          title={`Storylines${(storylineCount.data ?? 0) > 0 ? ` (${storylineCount.data})` : ''}`}
           variant="secondary"
           onPress={() => router.push(`/round/${id}/storylines`)}
         />

@@ -12,6 +12,11 @@ export interface Storyline {
 /**
  * The dirt. This is the input that makes the booth funny — everything else it
  * says comes from the scorecard, which knows what happened but not why.
+ *
+ * Returns only what you submitted. Everyone else's is invisible until Marcy
+ * says it out loud, which is both the joke and the reason people write
+ * honestly — a storyline with your name on it is a very different thing to
+ * write than one nobody can trace.
  */
 export function useStorylines(roundId: string | undefined) {
   return useQuery({
@@ -31,6 +36,19 @@ export function useStorylines(roundId: string | undefined) {
         submittedBy: row.submitted_by,
         createdAt: row.created_at,
       }));
+    },
+  });
+}
+
+/** How many are loaded, without revealing any of them. */
+export function useStorylineCount(roundId: string | undefined) {
+  return useQuery({
+    queryKey: ['round', roundId ?? 'none', 'storyline-count'],
+    enabled: Boolean(roundId),
+    queryFn: async (): Promise<number> => {
+      const { data, error } = await supabase.rpc('storyline_count', { p_round_id: roundId! });
+      if (error) throw error;
+      return (data as number) ?? 0;
     },
   });
 }
@@ -55,7 +73,10 @@ export function useAddStoryline(roundId: string) {
       });
       if (error) throw error;
     },
-    onSuccess: () => client.invalidateQueries({ queryKey: ['round', roundId, 'storylines'] }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['round', roundId, 'storylines'] });
+      void client.invalidateQueries({ queryKey: ['round', roundId, 'storyline-count'] });
+    },
   });
 }
 

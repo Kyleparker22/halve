@@ -16,6 +16,7 @@ import {
 import {
   useAddStoryline,
   useDeleteStoryline,
+  useStorylineCount,
   useStorylines,
 } from '../../../src/hooks/useBroadcast';
 import { useRoundBundle } from '../../../src/hooks/useRounds';
@@ -28,6 +29,7 @@ export default function StorylinesScreen() {
   const { session } = useSession();
   const bundle = useRoundBundle(id);
   const storylines = useStorylines(id);
+  const total = useStorylineCount(id);
   const add = useAddStoryline(id);
   const remove = useDeleteStoryline(id);
 
@@ -49,8 +51,11 @@ export default function StorylinesScreen() {
     <Screen>
       <Title>Storylines</Title>
       <Small>
-        What the booth does not know. Scores tell them what happened — this tells them why. Submit
-        before the round; everyone playing can see them.
+        What the booth does not know. Scores tell them what happened — this tells them why.
+      </Small>
+      <Small>
+        Nobody sees what you write. Not the person it is about, not the rest of the crew — the
+        first anyone hears of it is Marcy saying it on the third tee.
       </Small>
 
       <Card>
@@ -101,9 +106,18 @@ export default function StorylinesScreen() {
       </Card>
 
       <Card>
-        <Heading>On the record</Heading>
+        <Row justify="space-between">
+          <Heading>Loaded up</Heading>
+          <Small>
+            {total.data ?? 0} {(total.data ?? 0) === 1 ? 'storyline' : 'storylines'} in the booth
+          </Small>
+        </Row>
+        <Small>
+          You can see yours, and only yours. Everyone else has written something too — you will
+          find out what when they do.
+        </Small>
         {(storylines.data ?? []).length === 0 ? (
-          <Small>Nothing yet. The booth will have to work with the golf.</Small>
+          <Small>You have not given them anything yet.</Small>
         ) : (
           (storylines.data ?? []).map((line) => (
             <Row key={line.id} justify="space-between">
@@ -111,11 +125,9 @@ export default function StorylinesScreen() {
                 <Body style={{ color: theme.muted }}>{nameOf(line.subjectPlayerId)}: </Body>
                 {line.body}
               </Body>
-              {line.submittedBy === me ? (
-                <Pressable onPress={() => remove.mutate(line.id)}>
-                  <Small>delete</Small>
-                </Pressable>
-              ) : null}
+              <Pressable onPress={() => remove.mutate(line.id)}>
+                <Small>delete</Small>
+              </Pressable>
             </Row>
           ))
         )}

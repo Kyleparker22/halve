@@ -1884,6 +1884,7 @@ export type Database = {
         Args: { p_expense_id: string; p_member_ids: string[] }
         Returns: undefined
       }
+      storyline_count: { Args: { p_round_id: string }; Returns: number }
       sync_room_expense: { Args: { p_room_id: string }; Returns: undefined }
       update_hole_card: {
         Args: { p_holes: Json; p_tee_id: string }
